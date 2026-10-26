@@ -23,3 +23,11 @@ V3 is a **new implementation**, not a validated physics-equivalent refactor. Com
 * Each experimental rule may modify conservation; log energy/momentum diagnostics.
 * Particle count resets on slider release; all other rule sliders update live.
 * Browser regression, performance and original V2.3 equivalence are **not yet verified**.
+
+## V3.1: three targeted experiments
+- Collision shell slider now reaches 1.0 px, with visible particle core kept at 3.2 px. Drawn circles may visibly overlap without physical interaction at those radii.
+- Neighbour radius slider is hidden; the internal 28 px interaction radius remains active and is necessary for neighbour angle, speed freedom, softness and local speed mixing.
+- New **Speed variation (mixing)** 0–100% slider. At every tick it selects local pairs and rotates their relative velocities by a bounded random angle while preserving their *pair* kinetic energy and pair momentum. This is an additional hypothetical local interaction and can change speed distribution, but does not guarantee monotonic CV increase. Default = 0%, no effect.
+- New **Speed variation (CV)** measurement = population coefficient of variation (speed standard deviation divided by mean speed; unitless) sampled about four times per second.
+- Rule modules use existing generic hooks plus two extension points: `beforeMotion` each physics tick and `renderMetrics` each UI update. No other physics rule files were modified.
+- This does not address discrete collision tunneling; see prior limitations.

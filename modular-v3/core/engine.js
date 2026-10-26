@@ -20,6 +20,8 @@
         const gridSize=Math.max(S.get("neighborRadius"),2*S.get("collisionShellRadius"));
         const relationGrid=M.grid.make(world.particles,world.width,world.height,gridSize);
         M.neighbors.apply(world,relationGrid);
+        // Generic hook for independent live physics modules.
+        S.apply("beforeMotion",{world,grid:relationGrid,dt:step},null);
         M.motion.integrate(world,step);
         const collisionGrid=M.grid.make(world.particles,world.width,world.height,gridSize);
         M.collisions.resolve(world,collisionGrid);

@@ -15,7 +15,7 @@
     if(old.length!==2)throw Error("Expected two V2.3 physics control sections");
     for(const group of groups) {
       const section=document.createElement("section"),h=document.createElement("h2");h.textContent=group;section.appendChild(h);
-      for(const rule of S.rules.filter(r=>r.group===group)){
+      for(const rule of S.rules.filter(r=>r.group===group&&!r.hidden)){
         const label=document.createElement("label");label.className="control";
         const header=document.createElement("div"),name=document.createElement("span"),out=document.createElement("output");
         name.textContent=rule.label;out.id="v3out-"+rule.id;out.textContent=format(S.get(rule.id),rule);
@@ -68,6 +68,8 @@
       mMomentumEdit:s.momentumEditRate.toFixed(1)
     };
     for(const [id,value] of Object.entries(values)){const el=document.getElementById(id);if(el)el.textContent=value;}
+    // Rule modules may register their own diagnostics without editing this file.
+    S.apply("renderMetrics",{world},null);
   }
   S.module("controls",{build,metrics});
 })();

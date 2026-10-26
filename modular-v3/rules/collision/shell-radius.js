@@ -1,0 +1,1 @@
+SMP_V3.registerRule({id:"collisionShellRadius",group:"Collision properties",label:"Collision shell radius",min:3.2,max:20,step:0.2,default:7.2,unit:"px",description:"Harde contactafstand. Live instelbaar; kern blijft 3.2 px."});

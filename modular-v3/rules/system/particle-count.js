@@ -1,0 +1,1 @@
+SMP_V3.registerRule({id:"particleCount",group:"Systeem / dichtheid",label:"Particle count",min:200,max:5000,step:100,default:2000,onChange:"reset",description:"Populatie wordt aangepast wanneer je de slider loslaat."});

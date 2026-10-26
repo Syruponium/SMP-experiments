@@ -1,0 +1,24 @@
+{
+  "version": "3.0.0-experimental",
+  "files": [
+    "core/registry.js",
+    "core/math.js",
+    "core/grid.js",
+    "core/stats.js",
+    "core/placement.js",
+    "core/neighbors.js",
+    "core/motion.js",
+    "core/collisions.js",
+    "core/injectors.js",
+    "core/draw.js",
+    "core/controls.js",
+    "rules/system/particle-count.js",
+    "rules/collision/shell-radius.js",
+    "rules/collision/turn-angle.js",
+    "rules/neighbors/radius.js",
+    "rules/neighbors/edge-softness.js",
+    "rules/neighbors/angle.js",
+    "rules/neighbors/speed-freedom.js",
+    "core/engine.js"
+  ]
+}

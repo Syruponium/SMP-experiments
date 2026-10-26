@@ -1,0 +1,1 @@
+SMP_V3.registerRule({id:"neighborRadius",group:"Neighbour properties",label:"Neighbour radius",min:10,max:120,step:2,default:28,unit:"px",description:"Maximale informatieafstand; onafhankelijk van de collision shell."});

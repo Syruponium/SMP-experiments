@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v1.1
+# Tijdsdilatatie — modulaire simulatie v1.2
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -155,3 +155,13 @@ NB: de beschrijving van de onderling gekoppelde beginafstanden in v0.8 hierboven
 - **Alle tonen** geeft het totale overzicht. Alle getoonde afstanden ontstaan uit de onafhankelijke X/Y-coördinaten.
 - Geen aanpassingen aan `modules/response.js`, `modules/duration.js` of `modules/clocktempo.js`, noch aan de bewegingsregel in `modules/motion.js`. Afstand beïnvloedt de geprogrammeerde responssterkte niet. Grotere afstand alléén garandeert geen stabiele banen.
 - In de bestaande JSFiddle op **Run** klikken.
+
+## Hogere tijdversnelling met veilige tussenstappen (v1.2)
+
+- Module 2: **Tijdsversnelling (10^n jaar/s)**, met n van 0 tot 12 (eerder tot 6). Startwaarde blijft 6.
+- 9 staat voor 1 miljard gesimuleerde jaren per echte seconde en 12 voor 1 biljoen, voor zover de rekenkracht en benodigde resolutie dit toelaten.
+- Bestaande krachts-, kloktempo- en bewegingswetten blijven ongewijzigd; uitsluitend de tijdintegratie bij instellingen boven 6 is adaptief.
+- Tot en met 6 blijft de maximale deelstap 20.000 jaar zoals voorheen. Daarboven beperkt de integrator de stap op basis van onderlinge afstanden, relatieve snelheden en de versnellingsbovengrens; tijdens de fase van tempogroei ook op de groeitijd.
+- Maximaal 600 tussenstappen per schermframe. Bij te hoge ingestelde snelheid remt de effectieve tijdlijn af en verschijnt bij de tijdmeting een waarschuwing. Er worden nooit niet-berekende jaren aan de klok toegevoegd.
+- Ook deze adaptieve Euler-benadering is niet exact bij nauwe passages; convergentiecontrole met lagere tijdsnelheid blijft nuttig.
+- Bestaande JSFiddle: opnieuw op **Run** klikken; HTML/CSS/loader hoeven niet te veranderen.

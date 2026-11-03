@@ -213,15 +213,76 @@
       mode === "off" ? "Vrije beweging" : mode === "rate" ? "Test: vaste tempo's" : "Test: groei klokverschil";
   }
 
+  // Alleen de tijdintegratie is aangepast. De fysische regels in de
+  // vier modules blijven gelijk. Bij n<=6 behoudt de integrator de
+  // eerdere grens van 20.000 gesimuleerde jaren per tussenstap.
+  const MAX_PHYSICS_STEPS_PER_FRAME = 600;
+  let timeWarpLimited = false;
+  let timeWarpNotice = null;
+
+  function safePhysicsStepYears() {
+    if (S.get("timeExponent") <= 6) return 20000;
+
+    const mode = S.get("responseMode");
+    const strength = S.get("responseStrength");
+    const active = mode !== "off" && strength > 0;
+    let maxYears = 1e9;
+
+    // In de groeifase is de opbouw van het tempo een aparte tijdschaal.
+    if (mode === "duration") {
+      const growthYears = S.get("growthMyr") * 1e6;
+      if (world.years < growthYears) {
+        maxYears = Math.min(maxYears, growthYears / 40, growthYears - world.years);
+      }
+    }
+    if (!active) return maxYears;
+
+    const rates = names.map(name => world["rate" + name]);
+    const maxDelta = Math.max(
+      Math.abs(rates[0] - rates[1]),
+      Math.abs(rates[0] - rates[2]),
+      Math.abs(rates[1] - rates[2])
+    );
+    // Bovengrens van de totale paarrespons (twee paren per object);
+    // alleen gebruikt voor stapgrootte, niet voor de daadwerkelijke kracht.
+    const aBound = 50 * strength * Math.min(maxDelta, 10);
+    for (let i = 0; i < names.length; i++) {
+      for (let j = i + 1; j < names.length; j++) {
+        const a = world[names[i]], b = world[names[j]];
+        const distance = Math.hypot(a.x - b.x, a.y - b.y);
+        if (!(distance > 1e-4)) continue;
+        const relSpeed = Math.hypot(a.vx - b.vx, a.vy - b.vy);
+        // Per stap circa 2% van de actuele afstand, vanwege onderlinge
+        // snelheden of versnelling. Nabije passages vragen kleine stappen.
+        if (relSpeed > 1e-12) {
+          maxYears = Math.min(maxYears, 1e6 * 0.02 * distance / relSpeed);
+        }
+        if (aBound > 1e-12) {
+          maxYears = Math.min(maxYears, 1e6 * Math.sqrt(0.04 * distance / aBound));
+        }
+      }
+    }
+    return Math.max(1e-6, maxYears);
+  }
+
   function step(dtYears) {
-    // Kleine deelstappen houden de integratie bij tijdsversnelling beheersbaar.
-    const count = Math.max(1, Math.ceil(dtYears / 20000));
-    const h = dtYears / count;
-    for (let i = 0; i < count; i++) {
+    let remaining = dtYears;
+    let count = 0;
+    while (remaining > 0 && count < MAX_PHYSICS_STEPS_PER_FRAME) {
+      const h = Math.min(remaining, safePhysicsStepYears());
+      if (!(h > 0) || !Number.isFinite(h)) break;
+      const before = world.years;
       for (const module of physicsModules) {
         if (typeof module.update === "function") module.update(world, h);
       }
+      if (world.years === before) break;
+      remaining -= h;
+      if (remaining < dtYears * 1e-12) remaining = 0;
+      count++;
     }
+    // Niets overslaan: de displaytijd is alleen de effectief doorgerekende
+    // simulatiegeschiedenis. Extreme standen kunnen daardoor afremmen.
+    timeWarpLimited = remaining > 0;
   }
 
   // De camera is uitsluitend een weergave-instelling.
@@ -722,6 +783,11 @@
     if (caption) caption.textContent = "Snelheden A / B / C";
     extendObjectMetrics();
     buildPositionEditor();
+
+    timeWarpNotice = document.createElement("small");
+    timeWarpNotice.style.cssText = "display:block;margin:6px 3px 10px;color:#edbd7d;font-size:11px;line-height:1.45";
+    const target = document.getElementById("td-years");
+    if (target && target.parentNode) target.parentNode.appendChild(timeWarpNotice);
   }
 
   function distance(first, second) {
@@ -789,7 +855,15 @@
       step(dtReal * Math.pow(10, S.get("timeExponent")));
       render();
     }
-    if (now - previousMetrics > 100) { updateNumbers(); previousMetrics = now; }
+    if (now - previousMetrics > 100) {
+      updateNumbers();
+      if (timeWarpNotice) {
+        timeWarpNotice.textContent = timeWarpLimited && world.running
+          ? "Rekenlimiet actief: de simulatie verwerkt tijdelijk minder jaren dan gevraagd om baanberekeningen niet over te slaan."
+          : "";
+      }
+      previousMetrics = now;
+    }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

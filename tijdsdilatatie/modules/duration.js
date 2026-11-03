@@ -6,7 +6,7 @@
     description: "De begintempo's worden automatisch afgeleid uit het eindtempo en één gemeenschappelijk beginaandeel. De klokstanden tellen de veranderende tempo's op.",
     order: 20,
     controls: [
-      { id: "timeExponent", label: "Tijdsversnelling (10^n jaar/s)", min: 0, max: 6, step: 1, default: 6, digits: 0, unit: "", help: "Bij 6 verstrijken 1 miljoen simulatiejaren per echte seconde.", format: "exponent" },
+      { id: "timeExponent", label: "Tijdsversnelling (10^n jaar/s)", min: 0, max: 12, step: 1, default: 6, digits: 0, unit: "", help: "6 = 1 miljoen jaar/s; 9 = 1 miljard jaar/s; 12 = 1 biljoen jaar/s. Alleen de tijdlijn, niet de krachten, wordt versneld. Bij extreme standen geldt een rekenlimiet.", format: "exponent" },
       { id: "growthMyr", label: "Duur van tempogroei", min: 1, max: 4500, step: 1, default: 10, digits: 0, unit: "miljoen jaar", reset: true, help: "Bij 10 miljoen jaar duurt de overgang 10 seconden op tijdsversnelling 10^6. Alleen in de cumulatieve groeimodus." },
       { id: "initialFractionPct", label: "Beginaandeel van eind-tijdsdilatatie", min: 0, max: 100, step: 1, default: 50, digits: 0, unit: "%", reset: true, help: "50% = starten halverwege referentietempo 1,000 en het gekozen eindtempo; geldt voor A, B en C." }
     ],

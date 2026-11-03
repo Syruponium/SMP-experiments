@@ -21,6 +21,13 @@
   const nf = new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 2 });
   const nfSpeed = new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 3 });
   const nfAcceleration = new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 3, maximumFractionDigits: 6 });
+  const nfSensitivity = new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 8 });
+  function formatAccelerationDiagnostic(value) {
+    if (value !== 0 && Math.abs(value) < 0.00001) {
+      return value.toExponential(3).replace(".", ",");
+    }
+    return nfAcceleration.format(value);
+  }
   // Positiebewerking is uitsluitend bediening, geen fysicawet.
   let editingPositions = true;
   let selectedBody = "B";
@@ -78,6 +85,55 @@
 
         let input;
         const value = S.get(c.id);
+        if (c.type === "sensitivity") {
+          const output = document.createElement("output");
+          output.textContent = nfSensitivity.format(value) + " ×";
+          header.appendChild(output);
+
+          const slider = document.createElement("input");
+          slider.type = "range";
+          slider.min = "-6";
+          slider.max = "1";
+          slider.step = "0.01";
+          slider.value = String(Math.log10(Math.max(0.000001, value)));
+          slider.setAttribute("aria-label", "Logaritmische gevoeligheid van 0,000001 tot 10");
+
+          const numeric = document.createElement("input");
+          numeric.type = "number";
+          numeric.min = "0";
+          numeric.max = "10";
+          numeric.step = "any";
+          numeric.value = String(value);
+          numeric.setAttribute("aria-label", "Exacte gevoeligheid; 0 schakelt uit");
+          numeric.style.cssText = "display:block;width:100%;padding:7px 9px;margin:5px 0 3px;border:1px solid #39516b;border-radius:7px;background:#0b1724;color:#edf4fb;font:inherit;font-size:12px";
+
+          const apply = raw => {
+            if (!Number.isFinite(Number(raw))) return;
+            S.set(c.id, raw);
+            const actual = S.get(c.id);
+            numeric.value = String(actual);
+            slider.value = String(Math.log10(Math.max(0.000001, actual)));
+            output.textContent = nfSensitivity.format(actual) + " ×";
+            // Live wijzigen: de volgende tijdstap gebruikt direct de nieuwe sterkte.
+            // De startposities, beginsnelheden en klokstanden blijven staan.
+          };
+          slider.addEventListener("input", () => apply(Math.pow(10, Number(slider.value))));
+          numeric.addEventListener("change", () => {
+            if (!numeric.value.trim()) {
+              numeric.value = String(S.get(c.id));
+              return;
+            }
+            apply(Number(numeric.value));
+          });
+          label.append(slider, numeric);
+          if (c.help) {
+            const help = document.createElement("small");
+            help.textContent = c.help;
+            label.appendChild(help);
+          }
+          section.appendChild(label);
+          continue;
+        }
         if (c.type === "speed") {
           const output = document.createElement("output");
           output.textContent = nf.format(value) + " eenh./Mjr";
@@ -850,7 +906,7 @@
 
   function extendUI() {
     const title = document.querySelector(".td-header h1");
-    if (title) title.textContent = "Tijdsdilatatie — drie klokken · v1.5";
+    if (title) title.textContent = "Tijdsdilatatie — drie klokken · v1.6 · GitHub-live";
     const legend = document.createElement("span");
     const dot = document.createElement("i");
     dot.className = "td-dot";
@@ -868,6 +924,8 @@
     addMetric("td-gap-cb", "Opgebouwd verschil C − B");
     addMetric("td-distance-ac", "Afstand A–C");
     addMetric("td-distance-bc", "Afstand B–C");
+    addMetric("td-relative-accel-bc", "B–C verschil in versnelling |Δa| (laatste stap)");
+    addMetric("td-radial-accel-bc", "B–C radiaal (+ uiteen / − naar elkaar)");
     addMetric("td-start-rates", "Berekend begintempo A / B / C");
     addMetric("td-current-rates", "Huidig kloktempo A / B / C");
     const caption = document.getElementById("td-speed").previousElementSibling;
@@ -915,6 +973,21 @@
     document.getElementById("td-distance").textContent = nf.format(distance(world.A, world.B)) + " eenheden";
     document.getElementById("td-distance-ac").textContent = nf.format(distance(world.A, world.C)) + " eenheden";
     document.getElementById("td-distance-bc").textContent = nf.format(distance(world.B, world.C)) + " eenheden";
+    const bcActive = S.get("activeB") === 1 && S.get("activeC") === 1;
+    const deltaAx = world.C.ax - world.B.ax;
+    const deltaAy = world.C.ay - world.B.ay;
+    const magnitude = Math.hypot(deltaAx, deltaAy);
+    document.getElementById("td-relative-accel-bc").textContent = bcActive
+      ? formatAccelerationDiagnostic(magnitude) + " eenh./Mjr²"
+      : "— (geïsoleerd)";
+    const bcX = world.C.x - world.B.x, bcY = world.C.y - world.B.y;
+    const bcR = Math.hypot(bcX, bcY);
+    const radial = bcR > 0 ? (deltaAx * bcX + deltaAy * bcY) / bcR : 0;
+    document.getElementById("td-radial-accel-bc").textContent = !bcActive
+      ? "— (geïsoleerd)"
+      : bcR === 0
+        ? "n.v.t. (zelfde positie)"
+        : (radial > 0 ? "+" : "") + formatAccelerationDiagnostic(radial) + " eenh./Mjr²";
     document.getElementById("td-speed").textContent = names.map(name =>
       nf.format(Math.hypot(world[name].vx, world[name].vy))
     ).join(" / ") + " eenh./Mjr";

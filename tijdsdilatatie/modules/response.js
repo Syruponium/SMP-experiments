@@ -11,7 +11,7 @@
         { value: "rate", label: "Actueel kloktempoverschil" },
         { value: "duration", label: "Groeisnelheid opgebouwd klokverschil (met tempogroei)" }
       ], reset: true, help: "Actueel: constante ingestelde tempo's. Groei: tempo's evolueren volgens module 2; de respons gebruikt de groeisnelheid van het klokverschil, niet de achterstand." },
-      { id: "responseStrength", label: "Sterkte testkoppeling", min: 0, max: 8, step: 0.1, default: 1, digits: 1, unit: "×", help: "Geen Newton-wet of omgekeerde kwadraten. Energie en impuls zijn nog niet behouden." }
+      { id: "responseStrength", type: "sensitivity", label: "Gevoeligheid kloktempoverschil", min: 0, max: 10, step: 0.000001, default: 1, digits: 6, unit: "×", help: "Logaritmisch van 0,000001× tot 10×; exacte numerieke invoer inclusief 0 (uit). Vermenigvuldigt alleen de bestaande respons. Verandering werkt tijdens de simulatie zonder reset." }
     ],
     update(world, dtYears) {
       const S = window.TD_SIM;

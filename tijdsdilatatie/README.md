@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v1.5
+# Tijdsdilatatie — modulaire simulatie v1.6
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -195,3 +195,19 @@ NB: de beschrijving van de onderling gekoppelde beginafstanden in v0.8 hierboven
 - Het stilzetten van een vermeende centrale bron betekent ook dat zijn invloed volledig wegvalt. Dit is niet hetzelfde als een bron vastzetten die andere objecten wél aantrekt.
 - De bestaande paarformule en snelheidsintegratie voor ingeschakelde objecten zijn ongewijzigd; alleen deelname aan de interacties is schakelbaar.
 - Bestaande JSFiddle: klik op **Run**; HTML, CSS en loader hoeven niet bijgewerkt te worden.
+
+## v1.6 — Fijne responsgevoeligheid en meting B–C
+
+- **Module 4:** de testkoppeling heet nu **Gevoeligheid kloktempoverschil** en heeft een logaritmische regelaar van 0,000001× tot 10× plus een numeriek invoerveld (0 = uit). Standaard is 1×, zodat de eerdere respons exact behouden blijft.
+- Verandering van de gevoeligheid werkt direct tijdens de lopende simulatie **zonder reset**. De bestaande rekenregel `25 × gevoeligheid × |verschil in kloktempo|` blijft identiek bij dezelfde instelling.
+- Onder de bestaande metrieken: **B–C verschil in versnelling |Δa| (laatste stap)**, de grootte van het vectorverschil tussen de actuele versnellingen van C en B; en **B–C radiaal**, het deel langs de verbindingslijn. Positief = uiteen, negatief = naar elkaar.
+- Beide metrieken volgen de *netto* versnellingen uit alle actieve interacties. Zet A uit om alleen de B–C-interactie te testen, schakel A weer in voor de extra differentiële bijdrage. Bij isolatie van B of C tonen ze '—'.
+- Kleine versnellingen worden in wetenschappelijke notatie getoond om niet onterecht nul weer te geven.
+- De versie staat zichtbaar boven het canvas in de titel: **v1.6 · GitHub-live**.
+
+### JSFiddle automatisch vernieuwen
+
+- De opgeslagen JavaScript-loader `loader-for-jsfiddle.js` haalt bij iedere uitvoering `manifest.json` én alle modules opnieuw op van GitHub met cache-busting `?v=Date.now()` en `cache: no-store`. Een codewijziging in GitHub vereist dus **geen** handmatige wijziging in de opgeslagen Fiddle zolang die Fiddle de loader gebruikt.
+- In de **JSFiddle-editor** schakel je via **Editor settings → Behavior → Auto-run code** automatisch uitvoeren in. Anders is na het verversen vaak nog **Run** nodig. De gebruiker moet deze instelling zelf aanzetten; de GitHub-code kan de editorinstelling niet wijzigen.
+- Een opgeslagen Fiddle in alleen-resultaatweergave (`.../show/`) voert de loader bij paginavernieuwing opnieuw uit. Bij een stale editor of een oude inline kopie moet de loader **eenmalig** in de Fiddle staan; daarna zijn uitsluitend GitHub-updates nodig.
+- Het specifieke gedeelde JSFiddle-adres kon niet rechtstreeks worden uitgelezen. Controleer daarom op het scherm de titel **v1.6 · GitHub-live** om zeker te weten dat de gepubliceerde code draait.

@@ -95,7 +95,9 @@
     world.tauB = 0;
     world.tauC = 0;
     for (const name of names) world.trails[name] = [];
-    for (const name of names) world["rate" + name] = S.get("rate" + name);
+    const durationModule = S.modules.find(module => module.id === "duration");
+    for (const name of names) world["rate" + name] =
+      durationModule.rateAt(name, 0);
     render();
     updateNumbers();
   }
@@ -103,7 +105,7 @@
   function updateMode() {
     const mode = S.get("responseMode");
     document.getElementById("td-mode-label").textContent =
-      mode === "off" ? "Vrije beweging" : mode === "rate" ? "Test: temporespons" : "Test: duurrespons";
+      mode === "off" ? "Vrije beweging" : mode === "rate" ? "Test: vaste tempo's" : "Test: groei klokverschil";
   }
 
   function step(dtYears) {

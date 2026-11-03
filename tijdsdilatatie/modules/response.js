@@ -9,8 +9,8 @@
       { id: "responseMode", type: "select", label: "Signaal voor de bewegingsrespons", default: "off", options: [
         { value: "off", label: "Uit: alleen vrije beweging" },
         { value: "rate", label: "Actueel kloktempoverschil" },
-        { value: "duration", label: "Opgebouwd klokverschil" }
-      ], help: "Vergelijk actueel tempo met cumulatieve duur; dezelfde beginposities." },
+        { value: "duration", label: "Groeisnelheid opgebouwd klokverschil (met tempogroei)" }
+      ], reset: true, help: "Actueel: constante ingestelde tempo's. Groei: tempo's evolueren volgens module 2; de respons gebruikt de groeisnelheid van het klokverschil, niet de achterstand." },
       { id: "responseStrength", label: "Sterkte testkoppeling", min: 0, max: 8, step: 0.1, default: 1, digits: 1, unit: "×", help: "Geen Newton-wet of omgekeerde kwadraten. Energie en impuls zijn nog niet behouden." }
     ],
     update(world, dtYears) {
@@ -39,9 +39,10 @@
           const r = Math.hypot(dx, dy);
           if (r < 0.0001) continue;
 
-          const delta = mode === "rate"
-            ? Math.abs(rateFirst - rateSecond)
-            : Math.abs(world["tau" + first] - world["tau" + second]) / 1e6;
+          // d(klokverschil)/dt = verschil in actueel kloktempo.
+          // In 'duration' veranderen de tempo's met de tijd (module 2).
+          // De opgebouwde achterstand zelf heeft hier GEEN extra kracht.
+          const delta = Math.abs(rateFirst - rateSecond);
           // Getallen 25 en 10 zijn softwarekeuzes, geen natuurconstanten.
           const acceleration = 25 * strength * Math.min(delta, 10);
           dv[fasterName].x += acceleration * dx / r * dtMyr;

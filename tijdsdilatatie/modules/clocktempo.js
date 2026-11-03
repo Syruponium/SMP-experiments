@@ -3,7 +3,7 @@
   window.TD_SIM.registerModule({
     id: "clocktempo",
     title: "1 · Kloktempo / massaproxy",
-    description: "Geen massaberekening. Tempo A, B en C zijn onafhankelijk ingestelde relatieve kloktempo's; 'massa' is voorlopig alleen de interpretatie.",
+    description: "Instelbare eindtempo's A, B en C (massaproxy). Bij 'groei opgebouwd verschil' komen de klokken geleidelijk van hun begintempo naar deze waarden.",
     order: 10,
     controls: [
       { id: "rateA", label: "Kloktempo A", min: 0.5, max: 1.5, step: 0.001, default: 0.98, digits: 3, unit: "×", help: "Lager getal = langzamere klok." },

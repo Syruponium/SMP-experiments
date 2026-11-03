@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v1.3
+# Tijdsdilatatie — modulaire simulatie v1.4
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -173,3 +173,14 @@ NB: de beschrijving van de onderling gekoppelde beginafstanden in v0.8 hierboven
 - De hoekregeling en formule voor vx/vy zijn getest voor 0°, 90°, 180°, 270°; de richting is correct en niet gewijzigd.
 - Alle dynamische versnellings- en bewegingswetten blijven gelijk. Alleen bedieningsbereik en visualisatie zijn aangepast.
 - Klik Run in de bestaande JSFiddle.
+
+## v1.4 — Herstel van zichtbaar bewegingsgedrag (3 november 2026)
+
+- De gekleurde snelheidspijlen uit v1.3 zijn weer verwijderd. De originele staartjes blijven: de trajectgeschiedenis verzamelt nu een nieuw wereldcoördinaat-punt bij elke gewijzigde positie en is niet langer afhankelijk van minstens 2,5 pixels schermbeweging. De laatste 800 punten worden bewaard.
+- Na **Start simulatie** blijft het raster/canvas op dezelfde vaste camera staan als in de plaatsingsmodus. Geen automatische objectvolgende camera meer; de afzonderlijke knoppen Focus en Zoom blijven werken. Objecten zijn dus zichtbaar bewegend ten opzichte van een vast raster.
+- Iedere objectmetriek toont nu ook de **verplaatsing sinds start**; hierdoor kun je beweging bevestigen zonder pixelinterpretatie.
+- Nieuwe **beginafstanden voor zichtbaar testen**: A=(0,0), B=(400,0), C=(400,35). Zelf ingestelde waarden blijven vrij, tot ±10^15. Geen vaste zon/aarde/maanrelaties.
+- **Signaal voor de bewegingsrespons** staat bij een verse Run standaard op **Actueel kloktempoverschil**, zodat na Start simulatie de objecten bewegen. De uitschakeloptie blijft bestaan en de responswet is exact dezelfde.
+- De onafhankelijke positie-editor, grote vierkante canvas, uitgebreide tijdregelaar en optionele grote startsnelheden blijven beschikbaar.
+- Bij terugkeer naar de positie-editor worden de startposities hersteld. De simulatie moet met **Start simulatie** worden hervat.
+- De bewegingsintegratie en versnellingwet zijn niet gewijzigd. Dit is een gerichte herstelversie, geen volledige terugzetting van alle functies.

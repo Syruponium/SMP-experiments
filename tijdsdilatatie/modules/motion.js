@@ -3,15 +3,15 @@
   window.TD_SIM.registerModule({
     id: "motion",
     title: "3 · Snelheid en posities",
-    description: "Alle drie objecten hebben een onafhankelijke beginpositie X en Y. Kies zelf welk object de zon, aarde of maan voorstelt. Geen vooraf gekoppelde afstanden.",
+    description: "Drie objecten met onafhankelijke X- en Y-beginposities. Plaats ze rechtstreeks op het canvas of via de coördinaten onder het canvas. Hier stel je alleen de beweging en camera in.",
     order: 40,
     controls: [
-      { id: "posXA", type: "coordinate", label: "Beginpositie A — X", min: -1000000000, max: 1000000000, default: 0, reset: true, help: "Vrije X-coördinaat in eenheden; instelbaar met logaritmische schuif en exact getal. Geen koppeling aan andere objecten." },
-      { id: "posYA", type: "coordinate", label: "Beginpositie A — Y", min: -1000000000, max: 1000000000, default: 0, reset: true, help: "Vrije Y-coördinaat in eenheden; instelbaar met logaritmische schuif en exact getal. Geen koppeling aan andere objecten." },
-      { id: "posXB", type: "coordinate", label: "Beginpositie B — X", min: -1000000000, max: 1000000000, default: 10000, reset: true, help: "Vrije X-coördinaat in eenheden; instelbaar met logaritmische schuif en exact getal. Geen koppeling aan andere objecten." },
-      { id: "posYB", type: "coordinate", label: "Beginpositie B — Y", min: -1000000000, max: 1000000000, default: 0, reset: true, help: "Vrije Y-coördinaat in eenheden; instelbaar met logaritmische schuif en exact getal. Geen koppeling aan andere objecten." },
-      { id: "posXC", type: "coordinate", label: "Beginpositie C — X", min: -1000000000, max: 1000000000, default: 10000, reset: true, help: "Vrije X-coördinaat in eenheden; instelbaar met logaritmische schuif en exact getal. Geen koppeling aan andere objecten." },
-      { id: "posYC", type: "coordinate", label: "Beginpositie C — Y", min: -1000000000, max: 1000000000, default: 25, reset: true, help: "Vrije Y-coördinaat in eenheden; instelbaar met logaritmische schuif en exact getal. Geen koppeling aan andere objecten." },
+      { id: "posXA", type: "coordinate", label: "Beginpositie A — X", min: -1000000000, max: 1000000000, default: 0, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
+      { id: "posYA", type: "coordinate", label: "Beginpositie A — Y", min: -1000000000, max: 1000000000, default: 0, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
+      { id: "posXB", type: "coordinate", label: "Beginpositie B — X", min: -1000000000, max: 1000000000, default: 10000, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
+      { id: "posYB", type: "coordinate", label: "Beginpositie B — Y", min: -1000000000, max: 1000000000, default: 0, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
+      { id: "posXC", type: "coordinate", label: "Beginpositie C — X", min: -1000000000, max: 1000000000, default: 10000, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
+      { id: "posYC", type: "coordinate", label: "Beginpositie C — Y", min: -1000000000, max: 1000000000, default: 25, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
       { id: "cameraTarget", type: "select", label: "Camera volgt", default: "all", options: [
         { value: "all", label: "Alle drie (automatisch uitgezoomd)" },
         { value: "A", label: "Object A" },

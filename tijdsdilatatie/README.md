@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v0.8
+# Tijdsdilatatie — modulaire simulatie v0.9
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -113,3 +113,17 @@ Zonder wijzigingen aan de bestaande JSFiddle-HTML/CSS verschijnen boven de ander
 - Met camera op B kan een heel kleine B–C-beweging zichtbaar blijven wanneer A zeer ver weg is.
 - Geen stabiele zon–aarde–maanbanen worden afgedwongen of voorgeprogrammeerd. Of een geneste baan ontstaat is juist de onderzoeksvraag.
 - In de bestaande JSFiddle volstaat opnieuw **Run**; HTML, CSS en loader blijven gelijk.
+
+## Volledig onafhankelijke beginposities (v0.9)
+
+De eerdere koppeling A–B = zon–aarde en B–C = aarde–maan is verwijderd. A, B en C krijgen nu elk onafhankelijke wereldcoördinaten: **X en Y**. Je kiest zelf welk object welke rol heeft.
+
+- Zes instellingen: **Beginpositie A — X/Y**, **Beginpositie B — X/Y**, **Beginpositie C — X/Y**.
+- Elke coördinaat loopt van −1.000.000.000 tot +1.000.000.000 eenheden.
+- Gebruik de **logaritmische schuif** voor snelle bediening over grote en kleine afstanden, of het **numerieke veld** om de exacte coördinaat in te voeren (ook waarden tussen schuifstappen).
+- Alle coördinaten zijn **absoluut en onafhankelijk**: het verplaatsen van B verandert de ingestelde positie van C niet.
+- Standaard: A=(0,0), B=(10000,0), C=(10000,25), enkel als neutrale startconfiguratie; niets is geprogrammeerd als een gekoppelde maan of zon.
+- De camera kan alle drie objecten volgen of op één van A/B/C focussen, met eigen zichtbreedte. Camera en beginposities zijn enkel bediening en presentatie.
+- Kloktempo's, cumulatieve duur, testrespons, versnelling, snelheden en bewegingswetten zijn niet veranderd. Alle bestaande JSFiddle-panelen (HTML/CSS/loader) blijven gelijk; klik op Run.
+
+NB: de beschrijving van de onderling gekoppelde beginafstanden in v0.8 hierboven is historische versie-informatie en geldt vanaf v0.9 niet meer.

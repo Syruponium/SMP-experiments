@@ -77,6 +77,42 @@
 
         let input;
         const value = S.get(c.id);
+        if (c.type === "speed") {
+          const output = document.createElement("output");
+          output.textContent = nf.format(value) + " eenh./Mjr";
+          header.appendChild(output);
+          const slider = document.createElement("input");
+          slider.type = "range";
+          slider.min = "0"; slider.max = "6"; slider.step = "0.01";
+          slider.value = String(Math.log10(1 + value));
+          const numeric = document.createElement("input");
+          numeric.type = "number"; numeric.step = "any"; numeric.min = "0"; numeric.max = String(c.max);
+          numeric.value = String(value);
+          numeric.style.cssText = "display:block;width:100%;padding:7px 9px;margin:5px 0 3px;border:1px solid #39516b;border-radius:7px;background:#0b1724;color:#edf4fb;font:inherit;font-size:12px";
+          const changeSpeed = raw => {
+            S.set(c.id, raw);
+            const speed = S.get(c.id);
+            numeric.value = String(speed);
+            slider.value = String(Math.log10(1 + speed));
+            output.textContent = nf.format(speed) + " eenh./Mjr";
+            resetWorld();
+          };
+          slider.addEventListener("input", () => {
+            const speed = Math.pow(10, Number(slider.value)) - 1;
+            numeric.value = String(Number(speed.toPrecision(7)));
+            output.textContent = nf.format(speed) + " eenh./Mjr";
+          });
+          slider.addEventListener("change", () => changeSpeed(Math.pow(10, Number(slider.value)) - 1));
+          numeric.addEventListener("change", () => changeSpeed(numeric.value));
+          label.append(slider, numeric);
+          if (c.help) {
+            const help = document.createElement("small");
+            help.textContent = c.help;
+            label.appendChild(help);
+          }
+          section.appendChild(label);
+          continue;
+        }
         if (c.type === "coordinate") {
           const output = document.createElement("output");
           output.textContent = formatPosition(value);
@@ -384,6 +420,37 @@
     ctx.fillText(rate.toFixed(3).replace(".", ",") + "×", p.x + 20, p.y + 8);
   }
 
+  function drawVelocityArrows(camera) {
+    for (const name of names) {
+      const body = world[name];
+      const speed = Math.hypot(body.vx, body.vy);
+      const startSpeed = S.get("speed" + name);
+      const heading = editingPositions ? S.get("angle" + name) * Math.PI / 180 : Math.atan2(body.vy, body.vx);
+      const magnitude = editingPositions ? startSpeed : speed;
+      if (!(magnitude > 0)) continue;
+      const p = toCanvas(body, camera);
+      const len = 40;
+      const dx = len * Math.cos(heading), dy = -len * Math.sin(heading);
+      ctx.save();
+      ctx.strokeStyle = colors[name];
+      ctx.fillStyle = colors[name];
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.95;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x + dx, p.y + dy);
+      ctx.stroke();
+      const angle = Math.atan2(dy, dx);
+      ctx.beginPath();
+      ctx.moveTo(p.x + dx, p.y + dy);
+      ctx.lineTo(p.x + dx - 10 * Math.cos(angle - Math.PI / 6), p.y + dy - 10 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(p.x + dx - 10 * Math.cos(angle + Math.PI / 6), p.y + dy - 10 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
   function render() {
     const camera = cameraState();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -399,6 +466,7 @@
     ctx.setLineDash([]);
     for (const name of names) drawTrail(name, colors[name], world[name], camera);
     for (const name of names) drawBody(name, world[name], colors[name], camera);
+    drawVelocityArrows(camera);
     if (editingPositions) {
       const p = toCanvas(world[selectedBody], camera);
       ctx.beginPath();
@@ -759,7 +827,7 @@
 
   function extendUI() {
     const title = document.querySelector(".td-header h1");
-    if (title) title.textContent = "Tijdsdilatatie — drie klokken";
+    if (title) title.textContent = "Tijdsdilatatie — drie klokken · v1.3";
     const legend = document.createElement("span");
     const dot = document.createElement("i");
     dot.className = "td-dot";

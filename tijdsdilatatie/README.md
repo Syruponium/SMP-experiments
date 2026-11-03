@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v1.0
+# Tijdsdilatatie — modulaire simulatie v1.1
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -143,3 +143,15 @@ NB: de beschrijving van de onderling gekoppelde beginafstanden in v0.8 hierboven
 - De numerieke positievelden zijn geschikt voor grote afstandsverhoudingen waarbij niet alle punten tegelijk op een bruikbare schaal zichtbaar zijn.
 - Bestaande JSFiddle: alleen op **Run** klikken. De positioneringsinterface wordt door JavaScript onder het bestaande canvas ingevoegd; HTML/CSS/loader hoeven niet te worden gewijzigd.
 - De bestanden modules/response.js, modules/duration.js, modules/clocktempo.js en alle krachtsregels zijn ongewijzigd.
+
+
+## Veel grotere onafhankelijke afstanden en vierkant canvas (v1.1)
+
+- Canvas is via `core/app.js` nu **1400 × 1400** pixels (vierkant), bij een bredere maximale lay-out van 2000 pixels. Het werkt in een bestaande JSFiddle zonder HTML/CSS-aanpassing.
+- Alle zes coördinaten mogen nu van **−1.000.000.000.000.000 tot +1.000.000.000.000.000** lopen (±10^15 eenheden).
+- Nieuwe beginopstelling (uitsluitend als voorbeeld): A=(0,0), B=(10.000.000,0), C=(10.000.000,1.000). De verre afstand A–B is 1000× groter dan eerder; de kleine afstand B–C is 40× groter.
+- **Focus op selectie** kiest automatisch een lokale zoom passend bij de dichtstbijzijnde andere stip. Zo kan een verre zon buiten beeld staan terwijl de aarde–maan-relatie zichtbaar blijft.
+- Zoom in of uit op de cursor met het scrollwiel op het canvas tijdens plaatsingsmodus; de camera verplaatst niets in de simulatie.
+- **Alle tonen** geeft het totale overzicht. Alle getoonde afstanden ontstaan uit de onafhankelijke X/Y-coördinaten.
+- Geen aanpassingen aan `modules/response.js`, `modules/duration.js` of `modules/clocktempo.js`, noch aan de bewegingsregel in `modules/motion.js`. Afstand beïnvloedt de geprogrammeerde responssterkte niet. Grotere afstand alléén garandeert geen stabiele banen.
+- In de bestaande JSFiddle op **Run** klikken.

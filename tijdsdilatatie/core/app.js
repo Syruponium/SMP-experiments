@@ -6,6 +6,14 @@
   if (!canvas || !aside) throw new Error("HTML van index.html ontbreekt in JSFiddle.");
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas 2D niet beschikbaar");
+  // 1400x1400 square viewport; widen the existing JSFiddle layout at runtime.
+  canvas.width = 1400;
+  canvas.height = 1400;
+  canvas.style.width = "100%";
+  canvas.style.height = "auto";
+  canvas.style.aspectRatio = "1 / 1";
+  const appLayout = document.querySelector(".td-app");
+  if (appLayout) appLayout.style.maxWidth = "2000px";
   const names = ["A", "B", "C"];
   const colors = { A: "#f6a45c", B: "#5ccff0", C: "#c19bff" };
   const world = { running: true, years: 0, tauA: 0, tauB: 0, tauC: 0, rateA: 1, rateB: 1, rateC: 1, A: null, B: null, C: null, trails: { A: [], B: [], C: [] } };
@@ -405,7 +413,7 @@
 
   function editStartPosition(name, x, y) {
     if (!editingPositions) return;
-    const max = 1e9;
+    const max = 1e15;
     const finiteX = Math.max(-max, Math.min(max, x));
     const finiteY = Math.max(-max, Math.min(max, y));
     if (!Number.isFinite(finiteX) || !Number.isFinite(finiteY)) return;
@@ -487,8 +495,14 @@
     }));
     actions.append(mkButton("Focus op selectie", () => {
       const center = world[selectedBody];
-      const current = editorCamera || cameraState();
-      editorCamera = { x:center.x, y:center.y, scale:current.scale };
+      // Kies automatisch de lokale schaal: de dichtstbijzijnde andere stip
+      // wordt zichtbaar, zelfs als de derde vele grootteordes verderop ligt.
+      const near = names.filter(name => name !== selectedBody)
+        .map(name => Math.hypot(world[name].x-center.x, world[name].y-center.y))
+        .filter(distance => distance > 0);
+      const nearest = near.length ? Math.min(...near) : 100;
+      const scale = Math.min(1e12, Math.max(1e-15, canvas.width * 0.34 / nearest));
+      editorCamera = { x:center.x, y:center.y, scale };
       render();
     }));
     actions.append(mkButton("Zoom +", () => {
@@ -540,8 +554,8 @@
         const input = document.createElement("input");
         input.type = "number";
         input.step = "any";
-        input.min = "-1000000000";
-        input.max = "1000000000";
+        input.min = "-1000000000000000";
+        input.max = "1000000000000000";
         input.style.cssText = "display:block;width:100%;margin-top:4px;padding:6px 7px;border:1px solid #45617d;border-radius:6px;background:#0b1724;color:#edf4fb;font-size:12px";
         input.addEventListener("change", () => {
           const value = Number(input.value);
@@ -570,6 +584,23 @@
     editor.append(row, actions, editorStatus, coords);
     // Na het canvas en vóór de bestaande meetpanelen.
     canvas.insertAdjacentElement("afterend", editor);
+
+    // Scrollwiel zoomt rond de aanwijzer zonder de wereldposities te veranderen.
+    canvas.addEventListener("wheel", event => {
+      if (!editingPositions) return;
+      event.preventDefault();
+      const camera = editorCamera || cameraState();
+      const point = editorPointFromEvent(event);
+      const newScale = Math.min(1e12, Math.max(1e-15,
+        camera.scale * Math.exp(-Math.max(-100, Math.min(100, event.deltaY)) * 0.008)
+      ));
+      editorCamera = {
+        x:point.x - (point.screenX - canvas.width/2)/newScale,
+        y:point.y + (point.screenY - canvas.height/2)/newScale,
+        scale:newScale
+      };
+      render();
+    }, { passive:false });
 
     canvas.addEventListener("pointerdown", event => {
       if (!editingPositions || event.button !== 0) return;

@@ -16,6 +16,7 @@
 
   function formatted(c, value) {
     if (c.format === "exponent") return nf.format(Math.pow(10, value)) + " jaar/s";
+    if (c.format === "distanceExponent") return Math.pow(10, value).toLocaleString("nl-NL", {maximumFractionDigits: 5}) + " eenheden";
     if (c.type === "select") return "";
     return Number(value).toFixed(c.digits == null ? 2 : c.digits).replace(".", ",") + (c.unit ? " " + c.unit : "");
   }
@@ -88,10 +89,13 @@
   }
 
   function resetWorld() {
-    const half = S.get("separation") / 2;
+    // Alleen beginposities: de bewegings- en versnellingsregels veranderen niet.
+    const half = Math.pow(10, S.get("separation")) / 2;
+    const moonDistance = Math.pow(10, S.get("moonDistanceLog"));
+    const moonAngle = S.get("moonAngle") * Math.PI / 180;
     world.A = { x: -half, y: 0, ...initialVelocity("A") };
     world.B = { x: half, y: 0, ...initialVelocity("B") };
-    world.C = { x: S.get("positionCX"), y: S.get("positionCY"), ...initialVelocity("C") };
+    world.C = { x: world.B.x + moonDistance * Math.cos(moonAngle), y: world.B.y + moonDistance * Math.sin(moonAngle), ...initialVelocity("C") };
     for (const name of names) {
       world[name].ax = 0;
       world[name].ay = 0;
@@ -125,8 +129,13 @@
     }
   }
 
-  // Geen wanden; camera volgt alle drie.
+  // De camera is uitsluitend een weergave-instelling.
   function cameraState() {
+    const follow = S.get("cameraTarget");
+    if (follow !== "all") {
+      const body = world[follow];
+      return { x: body.x, y: body.y, scale: canvas.width / Math.pow(10, S.get("cameraRangeLog")) };
+    }
     const xs = names.map(name => world[name].x);
     const ys = names.map(name => world[name].y);
     const minX = Math.min(...xs), maxX = Math.max(...xs);

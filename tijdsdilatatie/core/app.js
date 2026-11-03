@@ -77,10 +77,16 @@
     }
   }
 
+  function initialVelocity(name) {
+    const speed = S.get("speed" + name);
+    const radians = S.get("angle" + name) * Math.PI / 180;
+    return { vx: speed * Math.cos(radians), vy: speed * Math.sin(radians) };
+  }
+
   function resetWorld() {
     const half = S.get("separation") / 2;
-    world.A = { x: -half, y: 0, vx: 0, vy: S.get("speedA") };
-    world.B = { x: half, y: 0, vx: 0, vy: S.get("speedB") };
+    world.A = { x: -half, y: 0, ...initialVelocity("A") };
+    world.B = { x: half, y: 0, ...initialVelocity("B") };
     world.years = 0;
     world.tauA = 0;
     world.tauB = 0;
@@ -109,31 +115,76 @@
     }
   }
 
-  function toCanvas(body) {
-    const scale = Math.min(canvas.width / 120, canvas.height / 88);
-    return { x: canvas.width / 2 + body.x * scale, y: canvas.height / 2 - body.y * scale };
+  // De wereld heeft geen wanden; de camera schaalt automatisch om beide objecten te volgen.
+  function cameraState() {
+    const dx = Math.abs(world.A.x - world.B.x);
+    const dy = Math.abs(world.A.y - world.B.y);
+    const scale = Math.min(
+      canvas.width / 120, canvas.height / 88,
+      (canvas.width - 150) / Math.max(dx, 1),
+      (canvas.height - 130) / Math.max(dy, 1)
+    );
+    return {
+      x: (world.A.x + world.B.x) / 2,
+      y: (world.A.y + world.B.y) / 2,
+      scale
+    };
   }
 
-  function drawTrail(name, color, body) {
-    const pos = toCanvas(body), points = world.trails[name];
-    if (!points.length || Math.hypot(pos.x - points[points.length - 1].x, pos.y - points[points.length - 1].y) > 2.5) {
-      points.push(pos);
-      if (points.length > 160) points.shift();
+  function toCanvas(point, camera) {
+    return {
+      x: canvas.width / 2 + (point.x - camera.x) * camera.scale,
+      y: canvas.height / 2 - (point.y - camera.y) * camera.scale
+    };
+  }
+
+  // Roosterlijnen liggen vast in wereldcoördinaten en maken camerabeweging zichtbaar.
+  function drawGrid(camera) {
+    const desiredStep = 80 / camera.scale;
+    const decade = Math.pow(10, Math.floor(Math.log10(desiredStep)));
+    const ratio = desiredStep / decade;
+    const step = decade * (ratio > 5 ? 10 : ratio > 2 ? 5 : ratio > 1 ? 2 : 1);
+    const left = camera.x - canvas.width / (2 * camera.scale);
+    const right = camera.x + canvas.width / (2 * camera.scale);
+    const bottom = camera.y - canvas.height / (2 * camera.scale);
+    const top = camera.y + canvas.height / (2 * camera.scale);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#192c3e";
+    for (let i = Math.ceil(left / step); i <= Math.floor(right / step); i++) {
+      const x = toCanvas({ x: i * step, y: 0 }, camera).x;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let i = Math.ceil(bottom / step); i <= Math.floor(top / step); i++) {
+      const y = toCanvas({ x: 0, y: i * step }, camera).y;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+  }
+
+  function drawTrail(name, color, body, camera) {
+    const points = world.trails[name];
+    const last = points[points.length - 1];
+    if (!last || Math.hypot(body.x - last.x, body.y - last.y) * camera.scale > 2.5) {
+      points.push({ x: body.x, y: body.y });
+      if (points.length > 200) points.shift();
     }
     if (points.length > 1) {
+      const start = toCanvas(points[0], camera);
       ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+      ctx.moveTo(start.x, start.y);
+      for (let i = 1; i < points.length; i++) {
+        const p = toCanvas(points[i], camera);
+        ctx.lineTo(p.x, p.y);
+      }
       ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.38;
+      ctx.globalAlpha = 0.4;
       ctx.lineWidth = 1.6;
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
   }
 
-  function drawBody(name, body, color) {
-    const p = toCanvas(body);
+  function drawBody(name, body, color, camera) {
+    const p = toCanvas(body, camera);
     ctx.beginPath();
     ctx.arc(p.x, p.y, 13, 0, Math.PI * 2);
     ctx.fillStyle = color;
@@ -150,25 +201,19 @@
   }
 
   function render() {
+    const camera = cameraState();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#192c3e";
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= canvas.width; x += 80) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-    }
-    for (let y = 0; y <= canvas.height; y += 80) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-    }
+    drawGrid(camera);
     ctx.setLineDash([4, 7]);
     ctx.strokeStyle = "#426079";
     ctx.beginPath();
-    const a = toCanvas(world.A), b = toCanvas(world.B);
+    const a = toCanvas(world.A, camera), b = toCanvas(world.B, camera);
     ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     ctx.setLineDash([]);
-    drawTrail("A", "#f6a45c", world.A);
-    drawTrail("B", "#5ccff0", world.B);
-    drawBody("A", world.A, "#f6a45c");
-    drawBody("B", world.B, "#5ccff0");
+    drawTrail("A", "#f6a45c", world.A, camera);
+    drawTrail("B", "#5ccff0", world.B, camera);
+    drawBody("A", world.A, "#f6a45c", camera);
+    drawBody("B", world.B, "#5ccff0", camera);
   }
 
   function updateNumbers() {

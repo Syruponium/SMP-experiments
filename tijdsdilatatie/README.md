@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v0.9
+# Tijdsdilatatie — modulaire simulatie v1.0
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -127,3 +127,19 @@ De eerdere koppeling A–B = zon–aarde en B–C = aarde–maan is verwijderd. 
 - Kloktempo's, cumulatieve duur, testrespons, versnelling, snelheden en bewegingswetten zijn niet veranderd. Alle bestaande JSFiddle-panelen (HTML/CSS/loader) blijven gelijk; klik op Run.
 
 NB: de beschrijving van de onderling gekoppelde beginafstanden in v0.8 hierboven is historische versie-informatie en geldt vanaf v0.9 niet meer.
+
+## Positie-editor direct onder het canvas (v1.0)
+
+**Wat is opgelost:** de X/Y-schuifjes stonden ver van het canvas, de automatische camera verplaatste het beeld bij elke wijziging en de getoonde punten waren tijdens het bijstellen onhandig te volgen.
+
+- Nieuwe plaatsingsmodus bij openen: simulatie staat stil, met geselecteerd object A.
+- Klik onder het canvas op **A / B / C**, klik daarna ergens in het canvas om dat object te plaatsen; of pak een zichtbare stip rechtstreeks met de muis en sleep deze.
+- Tijdens een sleepactie blijft de camera volledig vast; de automatische camera mag de coördinaten niet laten springen.
+- Onder het canvas staan zes exacte numerieke **X/Y-invoervelden**, gegroepeerd per object. De coördinaten blijven onafhankelijk, van −1 miljard tot +1 miljard eenheden.
+- **Alle tonen**, **Focus op selectie**, **Zoom +**, **Zoom −** regelen uitsluitend de camera in plaatsingsmodus. Ze veranderen geen enkele fysicavariabele.
+- Met **Start simulatie** start de tijdsintegratie vanuit de geplaatste objecten.
+- Met **Posities bewerken** keer je vanuit de actieve simulatie terug naar de startposities en wordt de simulatie gepauzeerd.
+- De zijbalk bevat nog steeds de kloktempo-, snelheids-, richtings- en cameraparameters, maar niet meer de X/Y-positievelden.
+- De numerieke positievelden zijn geschikt voor grote afstandsverhoudingen waarbij niet alle punten tegelijk op een bruikbare schaal zichtbaar zijn.
+- Bestaande JSFiddle: alleen op **Run** klikken. De positioneringsinterface wordt door JavaScript onder het bestaande canvas ingevoegd; HTML/CSS/loader hoeven niet te worden gewijzigd.
+- De bestanden modules/response.js, modules/duration.js, modules/clocktempo.js en alle krachtsregels zijn ongewijzigd.

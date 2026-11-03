@@ -13,6 +13,15 @@
   const nf = new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 2 });
   const nfSpeed = new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 3 });
   const nfAcceleration = new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 3, maximumFractionDigits: 6 });
+  // Positiebewerking is uitsluitend bediening, geen fysicawet.
+  let editingPositions = true;
+  let selectedBody = "A";
+  let editorCamera = null;
+  let pointerDragging = false;
+  const positionInputs = {};
+  let positionPanel = null;
+  let editorStatus = null;
+  let editButton = null;
 
   function formatted(c, value) {
     if (c.format === "exponent") return nf.format(Math.pow(10, value)) + " jaar/s";
@@ -44,7 +53,9 @@
       description.textContent = module.description;
       section.append(h2, description);
       for (const c of module.controls || []) {
-        const label = document.createElement(c.type === "coordinate" ? "div" : "label");
+        // Begincoördinaten staan direct onder het canvas, niet in de zijbalk.
+        if (c.type === "coordinate") continue;
+        const label = document.createElement("label");
         label.className = "td-control";
         const header = document.createElement("span");
         header.className = "td-control-head";
@@ -172,8 +183,10 @@
     const durationModule = S.modules.find(module => module.id === "duration");
     for (const name of names) world["rate" + name] =
       durationModule.rateAt(name, 0);
+    if (editingPositions) editorCamera = null; // opnieuw kadreren bij een expliciete reset
     render();
     updateNumbers();
+    if (positionPanel) refreshPositionEditor();
   }
 
   function updateMode() {
@@ -195,6 +208,7 @@
 
   // De camera is uitsluitend een weergave-instelling.
   function cameraState() {
+    if (editingPositions && editorCamera) return editorCamera;
     const follow = S.get("cameraTarget");
     if (follow !== "all") {
       const body = world[follow];
@@ -302,6 +316,16 @@
     ctx.setLineDash([]);
     for (const name of names) drawTrail(name, colors[name], world[name], camera);
     for (const name of names) drawBody(name, world[name], colors[name], camera);
+    if (editingPositions) {
+      const p = toCanvas(world[selectedBody], camera);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([5, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   }
 
   // De nieuwe metrieken en C-legenda komen dynamisch in de bestaande JSFiddle-HTML.
@@ -352,6 +376,236 @@
     metrics.prepend(...cards);
   }
 
+
+  function numericPosition(value) {
+    return String(Number(value.toPrecision(12)));
+  }
+
+  function refreshPositionEditor() {
+    for (const name of names) {
+      const controls = positionInputs[name];
+      if (!controls) continue;
+      controls.button.style.borderColor = selectedBody === name ? colors[name] : "#38506a";
+      controls.button.style.background = selectedBody === name ? "#243d58" : "#17283a";
+      for (const axis of ["X", "Y"]) {
+        const input = controls[axis];
+        if (document.activeElement !== input) input.value = numericPosition(S.get("pos" + axis + name));
+      }
+    }
+    if (positionPanel) {
+      positionPanel.style.opacity = "1";
+      if (editorStatus) editorStatus.textContent = editingPositions
+        ? "Plaatsingsmodus — stilstaand. Sleep een punt of klik om het geselecteerde punt te verplaatsen."
+        : "Simulatie actief. Klik op 'Posities bewerken' om de startposities aan te passen.";
+      if (editButton) editButton.textContent = editingPositions ? "Start simulatie" : "Posities bewerken";
+      canvas.style.cursor = editingPositions ? "crosshair" : "default";
+      canvas.style.touchAction = editingPositions ? "none" : "auto";
+    }
+  }
+
+  function editStartPosition(name, x, y) {
+    if (!editingPositions) return;
+    const max = 1e9;
+    const finiteX = Math.max(-max, Math.min(max, x));
+    const finiteY = Math.max(-max, Math.min(max, y));
+    if (!Number.isFinite(finiteX) || !Number.isFinite(finiteY)) return;
+    S.set("posX" + name, finiteX);
+    S.set("posY" + name, finiteY);
+    // De integratie is tijdens de plaatsing uitgeschakeld.
+    world[name].x = finiteX;
+    world[name].y = finiteY;
+    refreshPositionEditor();
+    render();
+    updateNumbers();
+  }
+
+  function editorPointFromEvent(event) {
+    const bounds = canvas.getBoundingClientRect();
+    const canvasX = (event.clientX - bounds.left) * canvas.width / bounds.width;
+    const canvasY = (event.clientY - bounds.top) * canvas.height / bounds.height;
+    const camera = editorCamera || cameraState();
+    return {
+      screenX: canvasX,
+      screenY: canvasY,
+      x: camera.x + (canvasX - canvas.width / 2) / camera.scale,
+      y: camera.y - (canvasY - canvas.height / 2) / camera.scale
+    };
+  }
+
+  function buildPositionEditor() {
+    const stage = canvas.parentNode;
+    const editor = document.createElement("section");
+    editor.setAttribute("aria-label", "Beginposities onder het canvas");
+    editor.style.cssText = "margin:10px 0 16px;padding:13px;border:1px solid #36546d;border-radius:11px;background:#122437;color:#edf4fb";
+    positionPanel = editor;
+
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px";
+    const title = document.createElement("strong");
+    title.textContent = "Plaats objecten op het scherm:";
+    title.style.cssText = "font-size:12px;margin-right:6px";
+    row.append(title);
+    for (const name of names) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "● " + name;
+      button.style.cssText = "padding:6px 13px;background:#17283a;border:1px solid #38506a;border-radius:7px;font-size:12px";
+      button.style.color = colors[name];
+      button.addEventListener("click", () => {
+        selectedBody = name;
+        refreshPositionEditor();
+        render();
+      });
+      positionInputs[name] = {button};
+      row.append(button);
+    }
+    const actions = document.createElement("div");
+    actions.style.cssText = "display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px";
+    const mkButton = (label, callback) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.style.cssText = "padding:6px 10px;background:#17283a;border:1px solid #38506a;font-size:12px";
+      b.addEventListener("click", callback);
+      return b;
+    };
+    const alignEditorCamera = () => {
+      editorCamera = null;
+      editorCamera = cameraState();
+      render();
+    };
+    actions.append(mkButton("Alle tonen", () => {
+      const xs=names.map(name => world[name].x), ys=names.map(name => world[name].y);
+      const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+      editorCamera = {
+        x:(minX+maxX)/2, y:(minY+maxY)/2,
+        scale:Math.min(canvas.width / 120, canvas.height / 88,
+          (canvas.width-150)/Math.max(maxX-minX,1),
+          (canvas.height-130)/Math.max(maxY-minY,1))
+      };
+      render();
+    }));
+    actions.append(mkButton("Focus op selectie", () => {
+      const center = world[selectedBody];
+      const current = editorCamera || cameraState();
+      editorCamera = { x:center.x, y:center.y, scale:current.scale };
+      render();
+    }));
+    actions.append(mkButton("Zoom +", () => {
+      const camera = editorCamera || cameraState();
+      editorCamera = {...camera, scale:Math.min(camera.scale*2,1e9)};
+      render();
+    }));
+    actions.append(mkButton("Zoom −", () => {
+      const camera = editorCamera || cameraState();
+      editorCamera = {...camera, scale:Math.max(camera.scale/2,1e-10)};
+      render();
+    }));
+    editButton = mkButton("Start simulatie", () => {
+      if (editingPositions) {
+        editingPositions = false;
+        world.running = true;
+        document.getElementById("td-pause").textContent = "Pauze";
+        editorCamera = null;
+      } else {
+        // Opnieuw beginnen vanaf de ingestelde startcoördinaten.
+        editingPositions = true;
+        world.running = false;
+        resetWorld();
+        editorCamera = cameraState();
+        document.getElementById("td-pause").textContent = "Verder";
+      }
+      refreshPositionEditor();
+      render();
+    });
+    editButton.style.background = "#236caa";
+    actions.append(editButton);
+    editorStatus = document.createElement("p");
+    editorStatus.style.cssText = "color:#a9c0d5;margin:7px 0 10px;font-size:11px;line-height:1.4";
+
+    const coords = document.createElement("div");
+    coords.style.cssText = "display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px";
+    for (const name of names) {
+      const cell = document.createElement("div");
+      cell.style.cssText = "min-width:0;background:#172c40;padding:9px;border-radius:8px";
+      const head = document.createElement("strong");
+      head.textContent = "Object " + name;
+      head.style.cssText = "display:block;font-size:12px;margin-bottom:7px";
+      head.style.color = colors[name];
+      cell.append(head);
+      for (const axis of ["X","Y"]) {
+        const label = document.createElement("label");
+        label.style.cssText = "display:block;font-size:11px;color:#a9c0d5;margin:4px 0";
+        label.textContent = axis + " (eenheden)";
+        const input = document.createElement("input");
+        input.type = "number";
+        input.step = "any";
+        input.min = "-1000000000";
+        input.max = "1000000000";
+        input.style.cssText = "display:block;width:100%;margin-top:4px;padding:6px 7px;border:1px solid #45617d;border-radius:6px;background:#0b1724;color:#edf4fb;font-size:12px";
+        input.addEventListener("change", () => {
+          const value = Number(input.value);
+          if (!input.value.trim() || !Number.isFinite(value)) {
+            refreshPositionEditor();
+            return;
+          }
+          if (!editingPositions) {
+            editingPositions = true;
+            world.running = false;
+            resetWorld();
+            editorCamera = cameraState();
+            document.getElementById("td-pause").textContent = "Verder";
+          }
+          const body = world[name];
+          if (axis === "X") editStartPosition(name, value, body.y);
+          else editStartPosition(name, body.x, value);
+          refreshPositionEditor();
+        });
+        label.append(input);
+        cell.append(label);
+        positionInputs[name][axis] = input;
+      }
+      coords.append(cell);
+    }
+    editor.append(row, actions, editorStatus, coords);
+    // Na het canvas en vóór de bestaande meetpanelen.
+    canvas.insertAdjacentElement("afterend", editor);
+
+    canvas.addEventListener("pointerdown", event => {
+      if (!editingPositions || event.button !== 0) return;
+      if (!editorCamera) editorCamera = cameraState();
+      const pos = editorPointFromEvent(event);
+      let nearest = null, minDist = 24;
+      for (const name of names) {
+        const screen = toCanvas(world[name], editorCamera);
+        const dist = Math.hypot(screen.x-pos.screenX,screen.y-pos.screenY);
+        if (dist < minDist) {minDist=dist;nearest=name;}
+      }
+      if (nearest) selectedBody = nearest;
+      else editStartPosition(selectedBody,pos.x,pos.y);
+      pointerDragging = true;
+      canvas.setPointerCapture(event.pointerId);
+      refreshPositionEditor();
+      render();
+      event.preventDefault();
+    });
+    canvas.addEventListener("pointermove", event => {
+      if (!editingPositions || !pointerDragging) return;
+      const pos = editorPointFromEvent(event);
+      editStartPosition(selectedBody,pos.x,pos.y);
+      event.preventDefault();
+    });
+    const stopDrag = event => {
+      if (!pointerDragging) return;
+      pointerDragging = false;
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    };
+    canvas.addEventListener("pointerup",stopDrag);
+    canvas.addEventListener("pointercancel",stopDrag);
+    // Zonder afhankelijkheid van native canvas-breedte of pagina-scroll.
+    refreshPositionEditor();
+  }
+
   function extendUI() {
     const title = document.querySelector(".td-header h1");
     if (title) title.textContent = "Tijdsdilatatie — drie klokken";
@@ -377,6 +631,7 @@
     const caption = document.getElementById("td-speed").previousElementSibling;
     if (caption) caption.textContent = "Snelheden A / B / C";
     extendObjectMetrics();
+    buildPositionEditor();
   }
 
   function distance(first, second) {
@@ -416,6 +671,11 @@
   }
 
   document.getElementById("td-pause").addEventListener("click", function () {
+    if (editingPositions) {
+      editingPositions = false;
+      editorCamera = null;
+      refreshPositionEditor();
+    }
     world.running = !world.running;
     this.textContent = world.running ? "Pauze" : "Verder";
   });
@@ -423,6 +683,11 @@
   extendUI();
   renderControls();
   resetWorld();
+  // Bij laden eerst rustig de drie beginposities instellen.
+  world.running = false;
+  document.getElementById("td-pause").textContent = "Verder";
+  editorCamera = cameraState();
+  refreshPositionEditor();
   updateMode();
   let previous = performance.now();
   let previousMetrics = 0;

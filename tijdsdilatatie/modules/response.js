@@ -17,24 +17,41 @@
       const S = window.TD_SIM;
       const mode = S.get("responseMode");
       const strength = S.get("responseStrength");
-      if (mode === "off" || strength === 0 || world.rateA === world.rateB) return;
+      if (mode === "off" || strength === 0) return;
 
-      // BEWUSTE TESTREGEL: de snellere klok reageert richting de tragere.
-      // Geen 'ontdekte' aantrekkingskracht: deze richting is expliciet gekozen.
-      const faster = world.rateA > world.rateB ? world.A : world.B;
-      const slower = world.rateA > world.rateB ? world.B : world.A;
-      const dx = slower.x - faster.x, dy = slower.y - faster.y;
-      const r = Math.hypot(dx, dy);
-      if (r < 0.0001) return;
-      const delta = mode === "rate"
-        ? Math.abs(world.rateA - world.rateB)
-        : Math.abs(world.tauB - world.tauA) / 1e6;
-      // Limiet voorkomt numerieke explosie; niet opgevat als natuurwet.
-      const signal = Math.min(delta, 10);
-      const acceleration = 25 * strength * signal;
+      // EXPERIMENTELE TESTREGEL, GEEN EMERGENTE ZWAARTEKRACHT:
+      // Elk ongelijk paar: de snellere klok versnelt richting de tragere.
+      // Evalueer alle drie paren vóór het wijzigen van de snelheden.
+      const names = ["A", "B", "C"];
+      const dv = { A: { x: 0, y: 0 }, B: { x: 0, y: 0 }, C: { x: 0, y: 0 } };
       const dtMyr = dtYears / 1e6;
-      faster.vx += acceleration * dx / r * dtMyr;
-      faster.vy += acceleration * dy / r * dtMyr;
+      for (let i = 0; i < names.length; i++) {
+        for (let j = i + 1; j < names.length; j++) {
+          const first = names[i], second = names[j];
+          const rateFirst = world["rate" + first];
+          const rateSecond = world["rate" + second];
+          if (rateFirst === rateSecond) continue;
+
+          const fasterName = rateFirst > rateSecond ? first : second;
+          const slowerName = rateFirst > rateSecond ? second : first;
+          const faster = world[fasterName], slower = world[slowerName];
+          const dx = slower.x - faster.x, dy = slower.y - faster.y;
+          const r = Math.hypot(dx, dy);
+          if (r < 0.0001) continue;
+
+          const delta = mode === "rate"
+            ? Math.abs(rateFirst - rateSecond)
+            : Math.abs(world["tau" + first] - world["tau" + second]) / 1e6;
+          // Getallen 25 en 10 zijn softwarekeuzes, geen natuurconstanten.
+          const acceleration = 25 * strength * Math.min(delta, 10);
+          dv[fasterName].x += acceleration * dx / r * dtMyr;
+          dv[fasterName].y += acceleration * dy / r * dtMyr;
+        }
+      }
+      for (const name of names) {
+        world[name].vx += dv[name].x;
+        world[name].vy += dv[name].y;
+      }
     }
   });
 })();

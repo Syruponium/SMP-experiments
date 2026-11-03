@@ -1,6 +1,6 @@
-# Tijdsdilatatie — modulaire simulatie v0.2
+# Tijdsdilatatie — modulaire simulatie v0.3
 
-Een minimale **twee-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
+Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
 ## Starten in JSFiddle
 
@@ -16,9 +16,9 @@ Daarna is bij iedere wijziging in GitHub alleen **Run** nodig: de loader laadt [
 
 | Module | Bestand | Wat wordt ingesteld? |
 | --- | --- | --- |
-| 1. Kloktempo / massaproxy | [modules/clocktempo.js](modules/clocktempo.js) | Twee onafhankelijke, relatieve kloktempo's (A/B) |
+| 1. Kloktempo / massaproxy | [modules/clocktempo.js](modules/clocktempo.js) | Drie onafhankelijke, relatieve kloktempo's (A/B/C) |
 | 2. Cumulatieve duur | [modules/duration.js](modules/duration.js) | Tijdsversnelling (1–1.000.000 simulatiejaren per echte seconde), klokstanden |
-| 3. Snelheid en posities | [modules/motion.js](modules/motion.js) | Beginafstand, snelheid en richting (0–360°) voor beide objecten |
+| 3. Snelheid en posities | [modules/motion.js](modules/motion.js) | Beginafstand, snelheid en richting (0–360°) voor A, B en C |
 | 4. Experimentele respons | [modules/response.js](modules/response.js) | Uit / huidig kloktempoverschil / opgebouwd klokverschil, koppelingssterkte |
 
 De algemene engine en UI zitten apart in [core](core). Iedere module registreert eigen instellingen; nieuwe modules komen via het manifest binnen.
@@ -26,11 +26,11 @@ De algemene engine en UI zitten apart in [core](core). Iedere module registreert
 ## Wat is en is niet gemodelleerd?
 
 - **Geen Newton-zwaartekracht**: er staat nergens de gravitatieconstante, massa-afstandsversnelling of een inverse-kwadraatwet.
-- **Massa is nog niet fysisch gekalibreerd**. De twee ingestelde kloktempo's zijn voorlopig *proxy's*; grotere massa wordt dus niet zelfstandig omgerekend naar sneller of langzamer tempo.
+- **Massa is nog niet fysisch gekalibreerd**. De drie ingestelde kloktempo's zijn voorlopig *proxy's*; grotere massa wordt dus niet zelfstandig omgerekend naar sneller of langzamer tempo.
 - **Een opbouwend verschil** is exact te berekenen uit de twee actuele klokstanden. Er is geen opgeslagen historie of extra veld.
 - **Standaard beweegt niets uit zichzelf.** Zet respons *Uit* en beginsnelheden op nul om te controleren dat alleen klokstanden uiteenlopen.
-- **Vrije 2D-beweging:** snelheid en richting per object zijn apart instelbaar. 0° is rechts, 90° omhoog, 180° links, 270° omlaag. Er zijn geen wanden of vaste bewegingsassen; de camera volgt en schaalt zodat beide objecten zichtbaar blijven.
-- **De optionele respons is bewust NIET emergent.** Ze stuurt de stip met het hogere kloktempo richting de stip met het lagere kloktempo. Dat is een testwet, expliciet zichtbaar en volledig uit te schakelen. Zonder extra fysica volgt beweging niet uit twee getallen voor kloktempo alleen.
+- **Vrije 2D-beweging:** snelheid en richting per object zijn apart instelbaar. 0° is rechts, 90° omhoog, 180° links, 270° omlaag. Er zijn geen wanden of vaste bewegingsassen; de camera volgt en schaalt zodat alle drie objecten zichtbaar blijven.
+- **De optionele respons is bewust NIET emergent.** Per paar versnelt de snellere klok richting de tragere klok. Dat is een testwet, expliciet zichtbaar en volledig uit te schakelen. Zonder extra fysica volgt beweging niet uit twee getallen voor kloktempo alleen.
 - Koppelingssterkte is niet fysisch geijkt. De optionele respons bewaart **nog geen energie of impuls** en is dus niet geschikt om conclusies over natuurkundige zwaartekracht te trekken.
 - Posities, snelheid en tijd zijn speelgoed-eenheden: afstanden in eenheden, snelheid in eenheden per miljoen jaar (Mjr), tijd in jaren. **Niet** geïnterpreteerd als AU, km/s of werkelijk zonne-/aardmassa.
 
@@ -44,3 +44,12 @@ De algemene engine en UI zitten apart in [core](core). Iedere module registreert
 5. Zet beide snelheden op 2, met richting A op 0° en B op 180°. Controleer horizontale beweging. Herhaal met A op 45° en B op 225° voor diagonale beweging.
 
 Dit zijn softwaretests van de gekozen regels, geen empirische bevestiging van een zwaartekrachtmechanisme.
+
+## Derde klok (v0.3)
+
+- C start paars, boven het midden van A en B. Alle drie starten op gelijke onderlinge afstand (gelijkzijdige driehoek).
+- C krijgt dezelfde onafhankelijke kloktempo-, snelheids- en richtingsschuifjes als A en B.
+- De respons onderzoekt alle drie paren A–B, A–C, B–C; bijdragen worden opgeteld, zonder inverse-kwadraatwet.
+- Alle drie klokstanden en alle paarsgewijze cumulatieve verschillen worden gemeten.
+- De camera houdt de drie objecten zichtbaar. Energie en impuls zijn bij ingeschakelde respons nog niet behouden.
+- Bestaande JSFiddle: alleen opnieuw op **Run** klikken. De derde legenda en metrieken worden automatisch door JavaScript toegevoegd; HTML en CSS kunnen blijven staan.

@@ -41,6 +41,13 @@
   let editorStatus = null;
   let editButton = null;
   const participationButtons = {};
+  const manualMotionElements = [];
+  const inheritedMotionElements = [];
+  function refreshMotionControls() {
+    const inherited = S.get("initialVelocityMode") === "inherited";
+    for (const element of manualMotionElements) element.style.display = inherited ? "none" : "block";
+    for (const element of inheritedMotionElements) element.style.display = inherited ? "block" : "none";
+  }
 
   function formatted(c, value) {
     if (c.format === "exponent") return nf.format(Math.pow(10, value)) + " jaar/s";
@@ -76,6 +83,8 @@
         if (c.type === "coordinate" || c.type === "bodyToggle") continue;
         const label = document.createElement("label");
         label.className = "td-control";
+        if (c.manualOnly) manualMotionElements.push(label);
+        if (c.inheritedOnly) inheritedMotionElements.push(label);
         const header = document.createElement("span");
         header.className = "td-control-head";
         const name = document.createElement("span");
@@ -124,6 +133,54 @@
               return;
             }
             apply(Number(numeric.value));
+          });
+          label.append(slider, numeric);
+          if (c.help) {
+            const help = document.createElement("small");
+            help.textContent = c.help;
+            label.appendChild(help);
+          }
+          section.appendChild(label);
+          continue;
+        }
+        if (c.type === "logMagnitude") {
+          const output = document.createElement("output");
+          const unit = c.unit ? " " + c.unit : "";
+          const maxLog = Math.log10(1 + c.max);
+          output.textContent = nf.format(value) + unit;
+          header.appendChild(output);
+          const slider = document.createElement("input");
+          slider.type = "range";
+          slider.min = String(Math.log10(1 + c.min));
+          slider.max = String(maxLog);
+          slider.step = "0.01";
+          slider.value = String(Math.log10(1 + value));
+          slider.setAttribute("aria-label", c.label + " (logaritmisch)");
+          const numeric = document.createElement("input");
+          numeric.type = "number";
+          numeric.min = String(c.min);
+          numeric.max = String(c.max);
+          numeric.step = "any";
+          numeric.value = String(value);
+          numeric.style.cssText = "display:block;width:100%;padding:7px 9px;margin:5px 0 3px;border:1px solid #39516b;border-radius:7px;background:#0b1724;color:#edf4fb;font:inherit;font-size:12px";
+          const commit = raw => {
+            if (!Number.isFinite(Number(raw))) return;
+            S.set(c.id, Number(raw));
+            const actual = S.get(c.id);
+            slider.value = String(Math.log10(1 + actual));
+            numeric.value = String(actual);
+            output.textContent = nf.format(actual) + unit;
+            if (c.reset) resetWorld();
+          };
+          slider.addEventListener("input", () => {
+            const preview = Math.pow(10, Number(slider.value)) - 1;
+            numeric.value = String(Number(preview.toPrecision(8)));
+            output.textContent = nf.format(preview) + unit;
+          });
+          slider.addEventListener("change", () => commit(Math.pow(10, Number(slider.value)) - 1));
+          numeric.addEventListener("change", () => {
+            if (numeric.value.trim()) commit(numeric.value);
+            else numeric.value = String(S.get(c.id));
           });
           label.append(slider, numeric);
           if (c.help) {
@@ -253,6 +310,7 @@
             if (editingPositions) editorCamera = null;
           }
           S.set(c.id, input.value);
+          if (c.id === "initialVelocityMode") refreshMotionControls();
           if (c.reset) resetWorld();
           if (c.id === "responseMode") {
             updateMode();
@@ -269,9 +327,17 @@
       }
       aside.appendChild(section);
     }
+    refreshMotionControls();
   }
 
   function initialVelocity(name) {
+    if (S.get("initialVelocityMode") === "inherited") {
+      const module = S.modules.find(item => item.id === "motion");
+      return module.inheritedVelocity({
+        x: S.get("posX" + name),
+        y: S.get("posY" + name)
+      });
+    }
     const speed = S.get("speed" + name);
     const radians = S.get("angle" + name) * Math.PI / 180;
     return { vx: speed * Math.cos(radians), vy: speed * Math.sin(radians) };
@@ -597,9 +663,12 @@
           ? "Plaatsingsmodus — de tijd staat stil. Sleep een punt om zijn beginpositie te veranderen."
           : world.running ? "Simulatie loopt." : "Simulatie is gepauzeerd.";
         const warning = responseOff
-          ? " LET OP: bewegingsrespons staat UIT (module 4). Bij startsnelheid 0 bewegen de objecten niet."
-          : " Bij enorme afstanden zie je beweging pas met lokale zoom; de beweging blijft fysiek even groot.";
-        editorStatus.textContent = state + warning;
+          ? " De klokrespons staat UIT (module 4); geërfde beweging blijft dan behouden."
+          : " De bestaande klokrespons buigt de geërfde beweging daarna af.";
+        const origin = S.get("initialVelocityMode") === "inherited"
+          ? " Beginsnelheden: geërfd uit één ruimtelijk samenhangend omgevingsveld."
+          : " Beginsnelheden: handmatig (controle).";
+        editorStatus.textContent = state + origin + warning;
       }
       if (editButton) editButton.textContent = editingPositions ? "Start simulatie" : "Posities bewerken";
       canvas.style.cursor = editingPositions ? "crosshair" : "default";
@@ -618,6 +687,13 @@
     // De integratie is tijdens de plaatsing uitgeschakeld.
     world[name].x = finiteX;
     world[name].y = finiteY;
+    // Verplaatsing tijdens opstellen betekent een andere lokale omgeving:
+    // de geërfde beginsnelheid wordt op die nieuwe plek opnieuw afgelezen.
+    if (S.get("initialVelocityMode") === "inherited") {
+      const v = initialVelocity(name);
+      world[name].vx = v.vx;
+      world[name].vy = v.vy;
+    }
     refreshPositionEditor();
     render();
     updateNumbers();
@@ -906,7 +982,7 @@
 
   function extendUI() {
     const title = document.querySelector(".td-header h1");
-    if (title) title.textContent = "Tijdsdilatatie — drie klokken · v1.6 · GitHub-live";
+    if (title) title.textContent = "Tijdsdilatatie — drie klokken · v1.7 · GitHub-live";
     const legend = document.createElement("span");
     const dot = document.createElement("i");
     dot.className = "td-dot";

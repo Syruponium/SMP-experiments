@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v1.6
+# Tijdsdilatatie — modulaire simulatie v1.7
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -211,3 +211,14 @@ NB: de beschrijving van de onderling gekoppelde beginafstanden in v0.8 hierboven
 - In de **JSFiddle-editor** schakel je via **Editor settings → Behavior → Auto-run code** automatisch uitvoeren in. Anders is na het verversen vaak nog **Run** nodig. De gebruiker moet deze instelling zelf aanzetten; de GitHub-code kan de editorinstelling niet wijzigen.
 - Een opgeslagen Fiddle in alleen-resultaatweergave (`.../show/`) voert de loader bij paginavernieuwing opnieuw uit. Bij een stale editor of een oude inline kopie moet de loader **eenmalig** in de Fiddle staan; daarna zijn uitsluitend GitHub-updates nodig.
 - Het specifieke gedeelde JSFiddle-adres kon niet rechtstreeks worden uitgelezen. Controleer daarom op het scherm de titel **v1.6 · GitHub-live** om zeker te weten dat de gepubliceerde code draait.
+
+## v1.7 — Lokale bewegings-overerving in plaats van drie handmatige startsnelheden
+
+- Nieuwe **Oorsprong van de beginbeweging** in module 3, standaard **Erf lokale omgevingsbeweging (experiment)**. De drie individuele snelheid/richting-schuifjes zijn in deze modus verborgen, niet verwijderd. Kies **Handmatige startsnelheden (controle)** om de oude onafhankelijke instellingen opnieuw te gebruiken. Omschakelen herstart de test.
+- Het hypothetische omgevingsveld is één gladde, **continue 2D-vectorfunctie** van de wereldcoördinaten (x,y), met zes niet-centrale sinus-/cosinusbijdragen. Het veld produceert vooraf bepaalde lokale *beginbeweging*, **geen gravitatiekracht, geen rotatie rond A/B/C en geen gegarandeerde baan**.
+- **Bewegingsniveau van de omgeving** bepaalt de gemeenschappelijke amplitude van dat veld (0–1.000.000 eenh./Mjr). **Ruimtelijke samenhang** bepaalt hoe sterk de beginsnelheden op nabije locaties overeenkomen (1–1 miljard eenheden). **Starttoestand van de omgeving** selecteert reproduceerbaar een andere ruimtelijke beginbeweging.
+- Objecten op dezelfde positie erven exact dezelfde beginsnelheid. Nabije objecten erven bij een hoge samenhang doorgaans vergelijkbare beweging. De objectnaam, kloktempo en de aanwezigheid van een verre derde bepalen *niet* hun lokale veldwaarde; het externe bewegingsveld fungeert alleen als expliciete beginvoorwaarde.
+- Alleen bij **Reset, positieaanpassing in de editor of verandering van de overervingsinstellingen** wordt de beginsnelheid uit het veld afgeleid. Daarna wordt het veld niet continu op de objecten toegepast; alleen de oude `modules/response.js` klokrespons versnelt objecten, `modules/motion.js` integreert de snelheden, en de bestaande tijdregeling werkt hetzelfde.
+- Deze aanpak test **geërfde beginbeweging + bestaande klokrespons**, zonder dat een cirkel- of ellipsbaan voorgeprogrammeerd wordt. Het is **niet** een afleiding van beweging uitsluitend uit het kloktempoverschil; een extra primitieve (de lokale bewegingsgeschiedenis van het medium) wordt als beginvoorwaarde gekozen.
+- Het testen van een stabiele aarde–maan–zon-hiërarchie blijft open; de huidige afstandsonafhankelijke, asymmetrische paarrespons is ongewijzigd. Zie ook de bestaande B–C relatieve versnellingsmeting.
+- De bestaande GitHub-loader, JSFiddle HTML/CSS en camerabediening blijven onveranderd. In een Fiddle met Auto-run volstaat refresh, anders Run.

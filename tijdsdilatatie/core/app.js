@@ -325,8 +325,9 @@
   function cameraState() {
     if (editingPositions && editorCamera) return editorCamera;
     if (!editingPositions && liveCamera) {
-      const body = world[liveCamera.follow];
-      return {x:body.x, y:body.y, scale:liveCamera.scale};
+      // Vaste referentie tijdens de run: het raster blijft staan en
+      // objecten bewegen zichtbaar ten opzichte van dezelfde coördinaten.
+      return liveCamera;
     }
     const follow = S.get("cameraTarget");
     if (follow !== "all") {
@@ -383,9 +384,12 @@
   function drawTrail(name, color, body, camera) {
     const points = world.trails[name];
     const last = points[points.length - 1];
-    if (!last || Math.hypot(body.x - last.x, body.y - last.y) * camera.scale > 2.5) {
+    // Trajecthistorie in wereldcoördinaten: niet afhankelijk van camerazoom.
+    // In de oude versie was >2,5 schermpixels nodig vóór een nieuw punt;
+    // op grote schaal leek het staartje daardoor volledig verdwenen.
+    if (!last || last.x !== body.x || last.y !== body.y) {
       points.push({ x: body.x, y: body.y });
-      if (points.length > 200) points.shift();
+      if (points.length > 800) points.shift();
     }
     if (points.length > 1) {
       const start = toCanvas(points[0], camera);
@@ -420,37 +424,6 @@
     ctx.fillText(rate.toFixed(3).replace(".", ",") + "×", p.x + 20, p.y + 8);
   }
 
-  function drawVelocityArrows(camera) {
-    for (const name of names) {
-      const body = world[name];
-      const speed = Math.hypot(body.vx, body.vy);
-      const startSpeed = S.get("speed" + name);
-      const heading = editingPositions ? S.get("angle" + name) * Math.PI / 180 : Math.atan2(body.vy, body.vx);
-      const magnitude = editingPositions ? startSpeed : speed;
-      if (!(magnitude > 0)) continue;
-      const p = toCanvas(body, camera);
-      const len = 40;
-      const dx = len * Math.cos(heading), dy = -len * Math.sin(heading);
-      ctx.save();
-      ctx.strokeStyle = colors[name];
-      ctx.fillStyle = colors[name];
-      ctx.lineWidth = 3;
-      ctx.globalAlpha = 0.95;
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      ctx.lineTo(p.x + dx, p.y + dy);
-      ctx.stroke();
-      const angle = Math.atan2(dy, dx);
-      ctx.beginPath();
-      ctx.moveTo(p.x + dx, p.y + dy);
-      ctx.lineTo(p.x + dx - 10 * Math.cos(angle - Math.PI / 6), p.y + dy - 10 * Math.sin(angle - Math.PI / 6));
-      ctx.lineTo(p.x + dx - 10 * Math.cos(angle + Math.PI / 6), p.y + dy - 10 * Math.sin(angle + Math.PI / 6));
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
   function render() {
     const camera = cameraState();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -466,7 +439,6 @@
     ctx.setLineDash([]);
     for (const name of names) drawTrail(name, colors[name], world[name], camera);
     for (const name of names) drawBody(name, world[name], colors[name], camera);
-    drawVelocityArrows(camera);
     if (editingPositions) {
       const p = toCanvas(world[selectedBody], camera);
       ctx.beginPath();
@@ -507,7 +479,8 @@
       for (const [key, label] of [
         ["rate", "Kloktempo"],
         ["speed", "Snelheid"],
-        ["accel", "Versnelling"]
+        ["accel", "Versnelling"],
+        ["drift", "Verplaatsing sinds start"]
       ]) {
         const line = document.createElement("div");
         line.style.display = "flex";
@@ -599,7 +572,7 @@
       .filter(distance => distance > 0);
     const nearest = distances.length ? Math.min(...distances) : 100;
     liveCamera = {
-      follow:name,
+      x:center.x, y:center.y,
       scale:Math.min(1e12,Math.max(1e-15, canvas.width / Math.max(nearest*3,50)))
     };
   }
@@ -683,7 +656,7 @@
     actions.append(mkButton("Zoom +", () => {
       const camera = editorCamera || cameraState();
       if (!editingPositions) {
-        liveCamera = {follow:selectedBody, scale:Math.min(camera.scale*2,1e12)};
+        liveCamera = {...camera, scale:Math.min(camera.scale*2,1e12)};
       } else {
         editorCamera = {...camera, scale:Math.min(camera.scale*2,1e12)};
       }
@@ -692,7 +665,7 @@
     actions.append(mkButton("Zoom −", () => {
       const camera = editorCamera || cameraState();
       if (!editingPositions) {
-        liveCamera = {follow:selectedBody, scale:Math.max(camera.scale/2,1e-15)};
+        liveCamera = {...camera, scale:Math.max(camera.scale/2,1e-15)};
       } else {
         editorCamera = {...camera, scale:Math.max(camera.scale/2,1e-15)};
       }
@@ -703,10 +676,10 @@
         editingPositions = false;
         world.running = true;
         document.getElementById("td-pause").textContent = "Pauze";
-        // Het overzicht heeft bij 10 miljoen eenheden een subpixel-verplaatsing.
-        // Daarom bij starten automatisch de dichtstbijzijnde lokale relatie volgen.
-        // Via 'Alle tonen' kan het volledige systeem weer bekeken worden.
-        startLocalCamera(selectedBody);
+        // De camera blijft bij Start EXACT op de plaats en schaal van
+        // de positie-editor; geen plotselinge automatische zoom/verplaatsing.
+        const fixedCamera = editorCamera || cameraState();
+        liveCamera = {...fixedCamera};
         editorCamera = null;
       } else {
         // Opnieuw beginnen vanaf de ingestelde startcoördinaten.
@@ -827,7 +800,7 @@
 
   function extendUI() {
     const title = document.querySelector(".td-header h1");
-    if (title) title.textContent = "Tijdsdilatatie — drie klokken · v1.3";
+    if (title) title.textContent = "Tijdsdilatatie — drie klokken · v1.4";
     const legend = document.createElement("span");
     const dot = document.createElement("i");
     dot.className = "td-dot";
@@ -875,6 +848,9 @@
         nfSpeed.format(Math.hypot(body.vx, body.vy)) + " eenh./Mjr";
       document.getElementById("td-accel-" + id).textContent =
         nfAcceleration.format(Math.hypot(body.ax, body.ay)) + " eenh./Mjr²";
+      document.getElementById("td-drift-" + id).textContent =
+        nfSpeed.format(Math.hypot(body.x - S.get("posX" + name),
+                                  body.y - S.get("posY" + name))) + " eenh.";
     }
     const durationModule = S.modules.find(module => module.id === "duration");
     document.getElementById("td-start-rates").textContent = names.map(name =>
@@ -897,7 +873,8 @@
   document.getElementById("td-pause").addEventListener("click", function () {
     if (editingPositions) {
       editingPositions = false;
-      startLocalCamera(selectedBody);
+      const fixedCamera = editorCamera || cameraState();
+      liveCamera = {...fixedCamera};
       editorCamera = null;
       refreshPositionEditor();
     }

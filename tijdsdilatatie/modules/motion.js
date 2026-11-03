@@ -3,7 +3,7 @@
   window.TD_SIM.registerModule({
     id: "motion",
     title: "3 · Snelheid en posities",
-    description: "Onafhankelijke beginposities tot ±10^15 eenheden. Plaats ze op het grote vierkante canvas of exact via de coördinaten eronder. Alle bewegingsregels blijven gelijk.",
+    description: "Onafhankelijke posities en instelbare bewegingsrichting voor A/B/C. Startsnelheden kunnen nu tot 1 miljoen eenh./Mjr worden ingesteld; de fysische bewegingswet is ongewijzigd.",
     order: 40,
     controls: [
       { id: "posXA", type: "coordinate", label: "Beginpositie A — X", min: -1000000000000000, max: 1000000000000000, default: 0, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
@@ -19,11 +19,11 @@
         { value: "C", label: "Object C" }
       ], help: "Alleen beeldweergave, geen invloed op de beweging." },
       { id: "cameraRangeLog", label: "Zichtbreedte bij volgen", min: -2, max: 10, step: 0.1, default: 2, digits: 1, format: "distanceExponent", help: "Kies het zichtveld bij de camera op A, B of C. Geen invloed op fysica." },
-      { id: "speedA", label: "Startsnelheid A", min: 0, max: 8, step: 0.1, default: 0, digits: 1, unit: "eenh./Mjr", reset: true, help: "Snelheid onafhankelijk van kloktempo." },
+      { id: "speedA", type: "speed", label: "Startsnelheid A", min: 0, max: 1000000, step: 0.1, default: 0, digits: 1, unit: "eenh./Mjr", reset: true, help: "0 = stilstand, dus een gekozen hoek alleen heeft dan geen bewegingseffect. Logaritmische schuif + exacte numerieke invoer, tot 1 miljoen eenh./Mjr." },
       { id: "angleA", label: "Bewegingsrichting A", min: 0, max: 360, step: 1, default: 90, digits: 0, unit: "°", reset: true, help: "0° = rechts · 90° = omhoog · 180° = links · 270° = omlaag." },
-      { id: "speedB", label: "Startsnelheid B", min: 0, max: 8, step: 0.1, default: 0, digits: 1, unit: "eenh./Mjr", reset: true, help: "Snelheid onafhankelijk van kloktempo." },
+      { id: "speedB", type: "speed", label: "Startsnelheid B", min: 0, max: 1000000, step: 0.1, default: 0, digits: 1, unit: "eenh./Mjr", reset: true, help: "0 = stilstand, dus een gekozen hoek alleen heeft dan geen bewegingseffect. Logaritmische schuif + exacte numerieke invoer, tot 1 miljoen eenh./Mjr." },
       { id: "angleB", label: "Bewegingsrichting B", min: 0, max: 360, step: 1, default: 90, digits: 0, unit: "°", reset: true, help: "0° = rechts · 90° = omhoog · 180° = links · 270° = omlaag." },
-      { id: "speedC", label: "Startsnelheid C", min: 0, max: 8, step: 0.1, default: 0, digits: 1, unit: "eenh./Mjr", reset: true, help: "Snelheid onafhankelijk van kloktempo." },
+      { id: "speedC", type: "speed", label: "Startsnelheid C", min: 0, max: 1000000, step: 0.1, default: 0, digits: 1, unit: "eenh./Mjr", reset: true, help: "0 = stilstand, dus een gekozen hoek alleen heeft dan geen bewegingseffect. Logaritmische schuif + exacte numerieke invoer, tot 1 miljoen eenh./Mjr." },
       { id: "angleC", label: "Bewegingsrichting C", min: 0, max: 360, step: 1, default: 90, digits: 0, unit: "°", reset: true, help: "0° = rechts · 90° = omhoog · 180° = links · 270° = omlaag." }
     ],
     update(world, dtYears) {

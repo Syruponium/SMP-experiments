@@ -3,10 +3,10 @@
   window.TD_SIM.registerModule({
     id: "response",
     title: "4 · Experimentele respons",
-    description: "Standaard UIT. De optionele richting 'sneller naar trager' is een expliciet geprogrammeerde TESTHYPOTHESE, geen emergente zwaartekracht.",
+    description: "Standaard ACTUEEL KLOKTEMPOVERSCHIL (uitschakelbaar). De optionele richting 'sneller naar trager' is een expliciet geprogrammeerde TESTHYPOTHESE, geen emergente zwaartekracht.",
     order: 30,
     controls: [
-      { id: "responseMode", type: "select", label: "Signaal voor de bewegingsrespons", default: "off", options: [
+      { id: "responseMode", type: "select", label: "Signaal voor de bewegingsrespons", default: "rate", options: [
         { value: "off", label: "Uit: alleen vrije beweging" },
         { value: "rate", label: "Actueel kloktempoverschil" },
         { value: "duration", label: "Groeisnelheid opgebouwd klokverschil (met tempogroei)" }

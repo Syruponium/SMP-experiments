@@ -21,6 +21,19 @@
     return Number(value).toFixed(c.digits == null ? 2 : c.digits).replace(".", ",") + (c.unit ? " " + c.unit : "");
   }
 
+  // Getekende afstandschuiven werken logaritmisch; de opgeslagen X/Y-posities
+  // zijn gewone wereldcoördinaten. Zo blijven kleine en enorme afstanden
+  // onafhankelijk instelbaar. Direct numeriek invoeren blijft ook mogelijk.
+  function positionToSlider(value) {
+    return Math.sign(value) * Math.log10(1 + Math.abs(value));
+  }
+  function sliderToPosition(value) {
+    return Math.sign(value) * (Math.pow(10, Math.abs(value)) - 1);
+  }
+  function formatPosition(value) {
+    return value.toLocaleString("nl-NL", { maximumFractionDigits: 3 }) + " eenheden";
+  }
+
   function renderControls() {
     for (const module of S.modules) {
       const section = document.createElement("section");
@@ -31,7 +44,7 @@
       description.textContent = module.description;
       section.append(h2, description);
       for (const c of module.controls || []) {
-        const label = document.createElement("label");
+        const label = document.createElement(c.type === "coordinate" ? "div" : "label");
         label.className = "td-control";
         const header = document.createElement("span");
         header.className = "td-control-head";
@@ -42,6 +55,60 @@
 
         let input;
         const value = S.get(c.id);
+        if (c.type === "coordinate") {
+          const output = document.createElement("output");
+          output.textContent = formatPosition(value);
+          header.appendChild(output);
+
+          const slider = document.createElement("input");
+          slider.type = "range";
+          slider.min = "-9";
+          slider.max = "9";
+          slider.step = "0.01";
+          slider.value = String(positionToSlider(value));
+          slider.setAttribute("aria-label", c.label + " via schuif");
+
+          const number = document.createElement("input");
+          number.type = "number";
+          number.min = String(c.min);
+          number.max = String(c.max);
+          number.step = "any";
+          number.value = String(value);
+          number.setAttribute("aria-label", c.label + " exact");
+          number.style.cssText = "display:block;width:100%;margin:5px 0 3px;padding:7px 9px;border:1px solid #39516b;border-radius:7px;color:#edf4fb;background:#0b1724;font:inherit;font-size:12px";
+
+          const commit = function (raw) {
+            S.set(c.id, raw);
+            const actual = S.get(c.id);
+            number.value = String(actual);
+            slider.value = String(positionToSlider(actual));
+            output.textContent = formatPosition(actual);
+            resetWorld();
+          };
+          slider.addEventListener("input", function () {
+            const preview = sliderToPosition(Number(slider.value));
+            number.value = String(Number(preview.toPrecision(8)));
+            output.textContent = formatPosition(preview);
+          });
+          slider.addEventListener("change", function () {
+            commit(sliderToPosition(Number(slider.value)));
+          });
+          number.addEventListener("change", function () {
+            if (!number.value.trim() || !Number.isFinite(Number(number.value))) {
+              number.value = String(S.get(c.id));
+              return;
+            }
+            commit(Number(number.value));
+          });
+          label.append(slider, number);
+          if (c.help) {
+            const help = document.createElement("small");
+            help.textContent = c.help;
+            label.appendChild(help);
+          }
+          section.appendChild(label);
+          continue;
+        }
         if (c.type === "select") {
           input = document.createElement("select");
           for (const option of c.options) {
@@ -90,12 +157,9 @@
 
   function resetWorld() {
     // Alleen beginposities: de bewegings- en versnellingsregels veranderen niet.
-    const half = Math.pow(10, S.get("separation")) / 2;
-    const moonDistance = Math.pow(10, S.get("moonDistanceLog"));
-    const moonAngle = S.get("moonAngle") * Math.PI / 180;
-    world.A = { x: -half, y: 0, ...initialVelocity("A") };
-    world.B = { x: half, y: 0, ...initialVelocity("B") };
-    world.C = { x: world.B.x + moonDistance * Math.cos(moonAngle), y: world.B.y + moonDistance * Math.sin(moonAngle), ...initialVelocity("C") };
+    world.A = { x: S.get("posXA"), y: S.get("posYA"), ...initialVelocity("A") };
+    world.B = { x: S.get("posXB"), y: S.get("posYB"), ...initialVelocity("B") };
+    world.C = { x: S.get("posXC"), y: S.get("posYC"), ...initialVelocity("C") };
     for (const name of names) {
       world[name].ax = 0;
       world[name].ay = 0;

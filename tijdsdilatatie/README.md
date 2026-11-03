@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v1.2
+# Tijdsdilatatie — modulaire simulatie v1.3
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -165,3 +165,11 @@ NB: de beschrijving van de onderling gekoppelde beginafstanden in v0.8 hierboven
 - Maximaal 600 tussenstappen per schermframe. Bij te hoge ingestelde snelheid remt de effectieve tijdlijn af en verschijnt bij de tijdmeting een waarschuwing. Er worden nooit niet-berekende jaren aan de klok toegevoegd.
 - Ook deze adaptieve Euler-benadering is niet exact bij nauwe passages; convergentiecontrole met lagere tijdsnelheid blijft nuttig.
 - Bestaande JSFiddle: opnieuw op **Run** klikken; HTML/CSS/loader hoeven niet te veranderen.
+
+## Bewegingsrichtingen zichtbaar en startsnelheden op grote schaal (v1.3)
+
+- Voor ieder object A/B/C een logaritmische startsnelheidsschuif van 0 tot 1.000.000 eenheden/Mjr, met daarnaast exacte numerieke invoer. De oude maximale waarde 8 was voor enorme onderlinge afstanden te klein.
+- Gekleurde pijlen op het canvas tonen in plaatsingsmodus de ingestelde richting (uitsluitend als startsnelheid > 0), en tijdens de simulatie de actuele snelheidsrichting.
+- De hoekregeling en formule voor vx/vy zijn getest voor 0°, 90°, 180°, 270°; de richting is correct en niet gewijzigd.
+- Alle dynamische versnellings- en bewegingswetten blijven gelijk. Alleen bedieningsbereik en visualisatie zijn aangepast.
+- Klik Run in de bestaande JSFiddle.

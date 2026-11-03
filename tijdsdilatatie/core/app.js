@@ -23,7 +23,10 @@
   const nfAcceleration = new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 3, maximumFractionDigits: 6 });
   // Positiebewerking is uitsluitend bediening, geen fysicawet.
   let editingPositions = true;
-  let selectedBody = "A";
+  let selectedBody = "B";
+  // Een lokale camera tijdens de simulatie laat kleine werkelijke verplaatsingen
+  // zien zonder posities, snelheden of versnellingen te veranderen.
+  let liveCamera = null;
   let editorCamera = null;
   let pointerDragging = false;
   const positionInputs = {};
@@ -152,9 +155,16 @@
           });
         }
         input.addEventListener(c.reset ? "change" : "input", function () {
+          if (c.id === "cameraTarget" || c.id === "cameraRangeLog") {
+            liveCamera = null;
+            if (editingPositions) editorCamera = null;
+          }
           S.set(c.id, input.value);
           if (c.reset) resetWorld();
-          if (c.id === "responseMode") updateMode();
+          if (c.id === "responseMode") {
+            updateMode();
+            if (positionPanel) refreshPositionEditor();
+          }
         });
         label.appendChild(input);
         if (c.help) {
@@ -217,6 +227,10 @@
   // De camera is uitsluitend een weergave-instelling.
   function cameraState() {
     if (editingPositions && editorCamera) return editorCamera;
+    if (!editingPositions && liveCamera) {
+      const body = world[liveCamera.follow];
+      return {x:body.x, y:body.y, scale:liveCamera.scale};
+    }
     const follow = S.get("cameraTarget");
     if (follow !== "all") {
       const body = world[follow];
@@ -402,9 +416,16 @@
     }
     if (positionPanel) {
       positionPanel.style.opacity = "1";
-      if (editorStatus) editorStatus.textContent = editingPositions
-        ? "Plaatsingsmodus — stilstaand. Sleep een punt of klik om het geselecteerde punt te verplaatsen."
-        : "Simulatie actief. Klik op 'Posities bewerken' om de startposities aan te passen.";
+      if (editorStatus) {
+        const responseOff = S.get("responseMode") === "off";
+        const state = editingPositions
+          ? "Plaatsingsmodus — de tijd staat stil. Sleep een punt om zijn beginpositie te veranderen."
+          : world.running ? "Simulatie loopt." : "Simulatie is gepauzeerd.";
+        const warning = responseOff
+          ? " LET OP: bewegingsrespons staat UIT (module 4). Bij startsnelheid 0 bewegen de objecten niet."
+          : " Bij enorme afstanden zie je beweging pas met lokale zoom; de beweging blijft fysiek even groot.";
+        editorStatus.textContent = state + warning;
+      }
       if (editButton) editButton.textContent = editingPositions ? "Start simulatie" : "Posities bewerken";
       canvas.style.cursor = editingPositions ? "crosshair" : "default";
       canvas.style.touchAction = editingPositions ? "none" : "auto";
@@ -437,6 +458,20 @@
       screenY: canvasY,
       x: camera.x + (canvasX - canvas.width / 2) / camera.scale,
       y: camera.y - (canvasY - canvas.height / 2) / camera.scale
+    };
+  }
+
+  // Dit is alleen de beeldschaal: de dichtstbijzijnde buur van de geselecteerde
+  // stip komt in beeld, ook bij een buitengewoon verre derde stip.
+  function startLocalCamera(name) {
+    const center = world[name];
+    const distances = names.filter(other => other !== name)
+      .map(other => Math.hypot(world[other].x-center.x, world[other].y-center.y))
+      .filter(distance => distance > 0);
+    const nearest = distances.length ? Math.min(...distances) : 100;
+    liveCamera = {
+      follow:name,
+      scale:Math.min(1e12,Math.max(1e-15, canvas.width / Math.max(nearest*3,50)))
     };
   }
 
@@ -483,6 +518,12 @@
       render();
     };
     actions.append(mkButton("Alle tonen", () => {
+      if (!editingPositions) {
+        liveCamera = null;
+        S.set("cameraTarget", "all");
+        render();
+        return;
+      }
       const xs=names.map(name => world[name].x), ys=names.map(name => world[name].y);
       const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
       editorCamera = {
@@ -495,6 +536,11 @@
     }));
     actions.append(mkButton("Focus op selectie", () => {
       const center = world[selectedBody];
+      if (!editingPositions) {
+        startLocalCamera(selectedBody);
+        render();
+        return;
+      }
       // Kies automatisch de lokale schaal: de dichtstbijzijnde andere stip
       // wordt zichtbaar, zelfs als de derde vele grootteordes verderop ligt.
       const near = names.filter(name => name !== selectedBody)
@@ -507,12 +553,20 @@
     }));
     actions.append(mkButton("Zoom +", () => {
       const camera = editorCamera || cameraState();
-      editorCamera = {...camera, scale:Math.min(camera.scale*2,1e9)};
+      if (!editingPositions) {
+        liveCamera = {follow:selectedBody, scale:Math.min(camera.scale*2,1e12)};
+      } else {
+        editorCamera = {...camera, scale:Math.min(camera.scale*2,1e12)};
+      }
       render();
     }));
     actions.append(mkButton("Zoom −", () => {
       const camera = editorCamera || cameraState();
-      editorCamera = {...camera, scale:Math.max(camera.scale/2,1e-10)};
+      if (!editingPositions) {
+        liveCamera = {follow:selectedBody, scale:Math.max(camera.scale/2,1e-15)};
+      } else {
+        editorCamera = {...camera, scale:Math.max(camera.scale/2,1e-15)};
+      }
       render();
     }));
     editButton = mkButton("Start simulatie", () => {
@@ -520,10 +574,15 @@
         editingPositions = false;
         world.running = true;
         document.getElementById("td-pause").textContent = "Pauze";
+        // Het overzicht heeft bij 10 miljoen eenheden een subpixel-verplaatsing.
+        // Daarom bij starten automatisch de dichtstbijzijnde lokale relatie volgen.
+        // Via 'Alle tonen' kan het volledige systeem weer bekeken worden.
+        startLocalCamera(selectedBody);
         editorCamera = null;
       } else {
         // Opnieuw beginnen vanaf de ingestelde startcoördinaten.
         editingPositions = true;
+        liveCamera = null;
         world.running = false;
         resetWorld();
         editorCamera = cameraState();
@@ -704,6 +763,7 @@
   document.getElementById("td-pause").addEventListener("click", function () {
     if (editingPositions) {
       editingPositions = false;
+      startLocalCamera(selectedBody);
       editorCamera = null;
       refreshPositionEditor();
     }

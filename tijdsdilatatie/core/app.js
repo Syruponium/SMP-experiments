@@ -89,7 +89,7 @@
     const half = S.get("separation") / 2;
     world.A = { x: -half, y: 0, ...initialVelocity("A") };
     world.B = { x: half, y: 0, ...initialVelocity("B") };
-    world.C = { x: 0, y: Math.sqrt(3) * half, ...initialVelocity("C") };
+    world.C = { x: S.get("positionCX"), y: S.get("positionCY"), ...initialVelocity("C") };
     world.years = 0;
     world.tauA = 0;
     world.tauB = 0;

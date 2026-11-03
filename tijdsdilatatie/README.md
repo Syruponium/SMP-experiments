@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v0.3
+# Tijdsdilatatie — modulaire simulatie v0.4
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -47,9 +47,17 @@ Dit zijn softwaretests van de gekozen regels, geen empirische bevestiging van ee
 
 ## Derde klok (v0.3)
 
-- C start paars, boven het midden van A en B. Alle drie starten op gelijke onderlinge afstand (gelijkzijdige driehoek).
+- C start paars boven het midden van A en B (X = 0, Y = 34,6); de beginpositie is vanaf v0.4 vrij instelbaar met twee afzonderlijke X- en Y-schuifjes (−150 tot +150 eenheden).
 - C krijgt dezelfde onafhankelijke kloktempo-, snelheids- en richtingsschuifjes als A en B.
 - De respons onderzoekt alle drie paren A–B, A–C, B–C; bijdragen worden opgeteld, zonder inverse-kwadraatwet.
 - Alle drie klokstanden en alle paarsgewijze cumulatieve verschillen worden gemeten.
 - De camera houdt de drie objecten zichtbaar. Energie en impuls zijn bij ingeschakelde respons nog niet behouden.
 - Bestaande JSFiddle: alleen opnieuw op **Run** klikken. De derde legenda en metrieken worden automatisch door JavaScript toegevoegd; HTML en CSS kunnen blijven staan.
+
+## Vrije beginpositie C (v0.4)
+
+- Instellingen in module 3: **Beginpositie C — X** en **Beginpositie C — Y**.
+- De coördinaten zijn wereldcoördinaten: midden tussen de beginposities van A en B is (0,0); X positief is rechts, Y positief is omhoog.
+- De ingestelde positie geldt bij een nieuwe run/reset. Bij loslaten van een schuifje reset de simulatie automatisch, gelijk aan de bestaande startsnelheid-schuifjes.
+- Andere modules, kloktempo, snelheden en bewegingsrespons zijn ongewijzigd. De canvas-camera zoomt automatisch mee.
+- In de bestaande JSFiddle volstaat **Run**; HTML en CSS blijven ongewijzigd.

@@ -11,6 +11,8 @@
   const world = { running: true, years: 0, tauA: 0, tauB: 0, tauC: 0, rateA: 1, rateB: 1, rateC: 1, A: null, B: null, C: null, trails: { A: [], B: [], C: [] } };
   const physicsModules = [...S.modules].sort((a, b) => (a.order || 0) - (b.order || 0));
   const nf = new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 2 });
+  const nfSpeed = new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 3 });
+  const nfAcceleration = new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 3, maximumFractionDigits: 6 });
 
   function formatted(c, value) {
     if (c.format === "exponent") return nf.format(Math.pow(10, value)) + " jaar/s";
@@ -90,6 +92,10 @@
     world.A = { x: -half, y: 0, ...initialVelocity("A") };
     world.B = { x: half, y: 0, ...initialVelocity("B") };
     world.C = { x: S.get("positionCX"), y: S.get("positionCY"), ...initialVelocity("C") };
+    for (const name of names) {
+      world[name].ax = 0;
+      world[name].ay = 0;
+    }
     world.years = 0;
     world.tauA = 0;
     world.tauB = 0;
@@ -237,6 +243,42 @@
     document.querySelector(".td-metrics").appendChild(div);
   }
 
+  // Drie compacte meetkaarten bovenaan de bestaande metriek-sectie.
+  // Geen wijzigingen nodig in de HTML of CSS van de opgeslagen JSFiddle.
+  function extendObjectMetrics() {
+    const metrics = document.querySelector(".td-metrics");
+    const cards = [];
+    for (const name of names) {
+      const card = document.createElement("div");
+      const heading = document.createElement("strong");
+      heading.textContent = "Object " + name;
+      heading.style.color = colors[name];
+      heading.style.display = "block";
+      heading.style.marginBottom = "10px";
+      card.appendChild(heading);
+      for (const [key, label] of [
+        ["rate", "Kloktempo"],
+        ["speed", "Snelheid"],
+        ["accel", "Versnelling"]
+      ]) {
+        const line = document.createElement("div");
+        line.style.display = "flex";
+        line.style.justifyContent = "space-between";
+        line.style.alignItems = "baseline";
+        line.style.gap = "8px";
+        const caption = document.createElement("span");
+        caption.textContent = label;
+        const value = document.createElement("strong");
+        value.id = "td-" + key + "-" + name.toLowerCase();
+        value.style.fontSize = "13px";
+        line.append(caption, value);
+        card.appendChild(line);
+      }
+      cards.push(card);
+    }
+    metrics.prepend(...cards);
+  }
+
   function extendUI() {
     const title = document.querySelector(".td-header h1");
     if (title) title.textContent = "Tijdsdilatatie — drie klokken";
@@ -261,6 +303,7 @@
     addMetric("td-current-rates", "Huidig kloktempo A / B / C");
     const caption = document.getElementById("td-speed").previousElementSibling;
     if (caption) caption.textContent = "Snelheden A / B / C";
+    extendObjectMetrics();
   }
 
   function distance(first, second) {
@@ -270,8 +313,16 @@
   function updateNumbers() {
     document.getElementById("td-years").textContent = nf.format(world.years) + " jaar";
     for (const name of names) {
-      document.getElementById("td-tau-" + name.toLowerCase()).textContent =
+      const id = name.toLowerCase();
+      const body = world[name];
+      document.getElementById("td-tau-" + id).textContent =
         nf.format(world["tau" + name]) + " jaar";
+      document.getElementById("td-rate-" + id).textContent =
+        world["rate" + name].toFixed(5).replace(".", ",") + " ×";
+      document.getElementById("td-speed-" + id).textContent =
+        nfSpeed.format(Math.hypot(body.vx, body.vy)) + " eenh./Mjr";
+      document.getElementById("td-accel-" + id).textContent =
+        nfAcceleration.format(Math.hypot(body.ax, body.ay)) + " eenh./Mjr²";
     }
     const durationModule = S.modules.find(module => module.id === "duration");
     document.getElementById("td-start-rates").textContent = names.map(name =>

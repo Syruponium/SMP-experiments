@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v0.6
+# Tijdsdilatatie — modulaire simulatie v0.7
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -90,3 +90,15 @@ De drie vaste sliders voor begintempo A/B/C zijn verwijderd. Elke startwaarde wo
 - Bij de bestaande JSFiddle volstaat **Run**; HTML en CSS blijven ongewijzigd.
 
 Dit vervangt de beschrijving van de afzonderlijke begintempo-sliders uit v0.5 hierboven.
+
+## Live-meting per object (v0.7)
+
+Zonder wijzigingen aan de bestaande JSFiddle-HTML/CSS verschijnen boven de andere meetwaarden drie afzonderlijke panelen voor A, B en C:
+
+- **Kloktempo**: actuele klokfactor (5 decimalen), inclusief de ingestelde groeifase.
+- **Snelheid**: lengte van de snelheidsvector, in eenheden per miljoen jaar (eenh./Mjr).
+- **Versnelling**: lengte van de netto versnellingsvector uit de responstest, in eenheden per miljoen jaar² (eenh./Mjr²).
+- **Versnelling = 0** als de respons uit staat, de koppelingssterkte nul is of er geen ongelijke kloktempo's bijdragen.
+- De versnelling wordt DIRECT uit de werkelijke in die simulatiestap opgetelde snelheidsverandering afgeleid, niet geschat uit de snelheid of positie op het canvas. De bijdrage van elk paar telt vectorieel mee.
+- Alle bestaande baan-, klok- en koppelingsregels zijn behouden. Alleen de acceleratie-diagnostiek en de presentatie zijn toegevoegd.
+- **Gebruik**: open je bestaande JSFiddle en klik alleen op Run.

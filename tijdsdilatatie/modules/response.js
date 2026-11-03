@@ -17,12 +17,20 @@
       const S = window.TD_SIM;
       const mode = S.get("responseMode");
       const strength = S.get("responseStrength");
-      if (mode === "off" || strength === 0) return;
+      // Versnelling is de verandering van de snelheidsvector per miljoen jaar.
+      // Ook als de respons uitstaat moet de live-meting direct nul aangeven.
+      const names = ["A", "B", "C"];
+      if (mode === "off" || strength === 0 || !(dtYears > 0)) {
+        for (const name of names) {
+          world[name].ax = 0;
+          world[name].ay = 0;
+        }
+        return;
+      }
 
       // EXPERIMENTELE TESTREGEL, GEEN EMERGENTE ZWAARTEKRACHT:
       // Elk ongelijk paar: de snellere klok versnelt richting de tragere.
       // Evalueer alle drie paren vóór het wijzigen van de snelheden.
-      const names = ["A", "B", "C"];
       const dv = { A: { x: 0, y: 0 }, B: { x: 0, y: 0 }, C: { x: 0, y: 0 } };
       const dtMyr = dtYears / 1e6;
       for (let i = 0; i < names.length; i++) {
@@ -50,6 +58,10 @@
         }
       }
       for (const name of names) {
+        // Netto momentane versnelling uit ALLE drie objectparen.
+        // Voor de bestaande bewegingsdynamiek blijft dv exact hetzelfde.
+        world[name].ax = dv[name].x / dtMyr;
+        world[name].ay = dv[name].y / dtMyr;
         world[name].vx += dv[name].x;
         world[name].vy += dv[name].y;
       }

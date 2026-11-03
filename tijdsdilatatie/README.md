@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v1.4
+# Tijdsdilatatie — modulaire simulatie v1.5
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -184,3 +184,14 @@ NB: de beschrijving van de onderling gekoppelde beginafstanden in v0.8 hierboven
 - De onafhankelijke positie-editor, grote vierkante canvas, uitgebreide tijdregelaar en optionele grote startsnelheden blijven beschikbaar.
 - Bij terugkeer naar de positie-editor worden de startposities hersteld. De simulatie moet met **Start simulatie** worden hervat.
 - De bewegingsintegratie en versnellingwet zijn niet gewijzigd. Dit is een gerichte herstelversie, geen volledige terugzetting van alle functies.
+
+## v1.5 — Objecten individueel stilzetten en isoleren
+
+- Onder het canvas staan nieuwe, onafhankelijke schakelaars **A: Actief/Stil**, **B: Actief/Stil**, **C: Actief/Stil** naast de bestaande plaatsingsbediening. Ze werken ook tijdens het afspelen, zonder de simulatie opnieuw te starten.
+- **Stil / geïsoleerd**: de positie blijft bevroren, de bestaande snelheid blijft opgeslagen, de versnelling wordt nul, en het object neemt in geen enkele richting deel aan de experimentele paarrespons. Het object blijft zichtbaar, maar gedimd. Na heractiveren hervat de beweging vanaf de opgeslagen positie/snelheid.
+- **De klokstanden blijven wel doorlopen** tijdens stilzetten. Dit is een isolatie van beweging/interacties, geen onderbreking van de universele tijdlijn; kloktempo's van geïsoleerde objecten werken niet op andere objecten door.
+- De tijdsintegrator houdt bij hoge tijdversnelling uitsluitend rekening met actieve paren om te voorkomen dat een uitgeschakeld object de stapgrootte beïnvloedt.
+- Voor een proef met alleen aarde en maan: **A uit, B en C aan**. Alleen een verschil tussen kloktempo B en C kan in de huidige testwet onderlinge versnelling opwekken; een niet-nul dwarse startsnelheid is nodig om een baan mogelijk te maken.
+- Het stilzetten van een vermeende centrale bron betekent ook dat zijn invloed volledig wegvalt. Dit is niet hetzelfde als een bron vastzetten die andere objecten wél aantrekt.
+- De bestaande paarformule en snelheidsintegratie voor ingeschakelde objecten zijn ongewijzigd; alleen deelname aan de interacties is schakelbaar.
+- Bestaande JSFiddle: klik op **Run**; HTML, CSS en loader hoeven niet bijgewerkt te worden.

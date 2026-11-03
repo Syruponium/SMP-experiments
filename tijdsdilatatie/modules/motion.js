@@ -12,6 +12,9 @@
       { id: "posYB", type: "coordinate", label: "Beginpositie B — Y", min: -1000000000000000, max: 1000000000000000, default: 0, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
       { id: "posXC", type: "coordinate", label: "Beginpositie C — X", min: -1000000000000000, max: 1000000000000000, default: 400, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
       { id: "posYC", type: "coordinate", label: "Beginpositie C — Y", min: -1000000000000000, max: 1000000000000000, default: 35, reset: true, help: "Positie via het canvas of het exacte invoerveld onder de simulatie." },
+      { id: "activeA", type: "bodyToggle", label: "Object A interactie", min: 0, max: 1, step: 1, default: 1 },
+      { id: "activeB", type: "bodyToggle", label: "Object B interactie", min: 0, max: 1, step: 1, default: 1 },
+      { id: "activeC", type: "bodyToggle", label: "Object C interactie", min: 0, max: 1, step: 1, default: 1 },
       { id: "cameraTarget", type: "select", label: "Camera volgt", default: "all", options: [
         { value: "all", label: "Alle drie (automatisch uitgezoomd)" },
         { value: "A", label: "Object A" },
@@ -28,7 +31,12 @@
     ],
     update(world, dtYears) {
       const dtMyr = dtYears / 1e6;
-      for (const body of [world.A, world.B, world.C]) {
+      const S = window.TD_SIM;
+      for (const name of ["A", "B", "C"]) {
+        // Object uit: positie én snelheid blijven onveranderd opgeslagen.
+        // Bij opnieuw activeren gaat het verder vanaf diezelfde toestand.
+        if (S.get("active" + name) !== 1) continue;
+        const body = world[name];
         body.x += body.vx * dtMyr;
         body.y += body.vy * dtMyr;
       }

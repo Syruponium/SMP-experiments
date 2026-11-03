@@ -33,6 +33,7 @@
   let positionPanel = null;
   let editorStatus = null;
   let editButton = null;
+  const participationButtons = {};
 
   function formatted(c, value) {
     if (c.format === "exponent") return nf.format(Math.pow(10, value)) + " jaar/s";
@@ -65,7 +66,7 @@
       section.append(h2, description);
       for (const c of module.controls || []) {
         // Begincoördinaten staan direct onder het canvas, niet in de zijbalk.
-        if (c.type === "coordinate") continue;
+        if (c.type === "coordinate" || c.type === "bodyToggle") continue;
         const label = document.createElement("label");
         label.className = "td-control";
         const header = document.createElement("span");
@@ -273,18 +274,23 @@
     }
     if (!active) return maxYears;
 
-    const rates = names.map(name => world["rate" + name]);
-    const maxDelta = Math.max(
-      Math.abs(rates[0] - rates[1]),
-      Math.abs(rates[0] - rates[2]),
-      Math.abs(rates[1] - rates[2])
-    );
+    // Uitgeschakelde objecten mogen ook de numerieke tijdstap van het
+    // resterende systeem niet kunstmatig beperken.
+    const activeNames = names.filter(name => S.get("active" + name) === 1);
+    if (activeNames.length < 2) return maxYears;
+    const rates = activeNames.map(name => world["rate" + name]);
+    let maxDelta = 0;
+    for (let i = 0; i < rates.length; i++) {
+      for (let j = i + 1; j < rates.length; j++) {
+        maxDelta = Math.max(maxDelta, Math.abs(rates[i] - rates[j]));
+      }
+    }
     // Bovengrens van de totale paarrespons (twee paren per object);
     // alleen gebruikt voor stapgrootte, niet voor de daadwerkelijke kracht.
     const aBound = 50 * strength * Math.min(maxDelta, 10);
-    for (let i = 0; i < names.length; i++) {
-      for (let j = i + 1; j < names.length; j++) {
-        const a = world[names[i]], b = world[names[j]];
+    for (let i = 0; i < activeNames.length; i++) {
+      for (let j = i + 1; j < activeNames.length; j++) {
+        const a = world[activeNames[i]], b = world[activeNames[j]];
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
         if (!(distance > 1e-4)) continue;
         const relSpeed = Math.hypot(a.vx - b.vx, a.vy - b.vy);
@@ -409,6 +415,8 @@
 
   function drawBody(name, body, color, camera) {
     const p = toCanvas(body, camera);
+    const enabled = S.get("active" + name) === 1;
+    ctx.globalAlpha = enabled ? 1 : 0.35;
     ctx.beginPath();
     ctx.arc(p.x, p.y, 13, 0, Math.PI * 2);
     ctx.fillStyle = color;
@@ -418,10 +426,11 @@
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#e9f5ff";
     ctx.font = "bold 15px system-ui";
-    ctx.fillText(name, p.x + 20, p.y - 10);
+    ctx.fillText(name + (enabled ? "" : " [STIL]"), p.x + 20, p.y - 10);
     ctx.font = "12px system-ui";
     const rate = world["rate" + name];
     ctx.fillText(rate.toFixed(3).replace(".", ",") + "×", p.x + 20, p.y + 8);
+    ctx.globalAlpha = 1;
   }
 
   function render() {
@@ -511,6 +520,14 @@
       if (!controls) continue;
       controls.button.style.borderColor = selectedBody === name ? colors[name] : "#38506a";
       controls.button.style.background = selectedBody === name ? "#243d58" : "#17283a";
+      const gate = participationButtons[name];
+      if (gate) {
+        const active = S.get("active" + name) === 1;
+        gate.textContent = name + ": " + (active ? "Actief" : "Stil / geïsoleerd");
+        gate.setAttribute("aria-pressed", String(!active));
+        gate.style.borderColor = active ? "#38506a" : colors[name];
+        gate.style.background = active ? "#17283a" : "#3a2735";
+      }
       for (const axis of ["X", "Y"]) {
         const input = controls[axis];
         if (document.activeElement !== input) input.value = numericPosition(S.get("pos" + axis + name));
@@ -604,6 +621,39 @@
       positionInputs[name] = {button};
       row.append(button);
     }
+
+    // Schakelaars voor de bewegingsdeelname zijn altijd bereikbaar,
+    // zowel tijdens het positioneren als tijdens de lopende simulatie.
+    const gateRow = document.createElement("div");
+    gateRow.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:5px 0 11px";
+    const gateLabel = document.createElement("strong");
+    gateLabel.textContent = "Interacties per object:";
+    gateLabel.style.cssText = "font-size:12px;margin-right:4px";
+    gateRow.append(gateLabel);
+    for (const name of names) {
+      const gate = document.createElement("button");
+      gate.type = "button";
+      gate.style.cssText = "padding:7px 10px;border:1px solid #38506a;border-radius:7px;font-size:12px";
+      gate.addEventListener("click", () => {
+        const wasActive = S.get("active" + name) === 1;
+        S.set("active" + name, wasActive ? 0 : 1);
+        if (wasActive) {
+          world[name].ax = 0;
+          world[name].ay = 0;
+        }
+        // Geen reset. De positie, snelheid en bestaande trajecten blijven.
+        refreshPositionEditor();
+        render();
+        updateNumbers();
+      });
+      participationButtons[name] = gate;
+      gateRow.append(gate);
+    }
+    const gateNote = document.createElement("small");
+    gateNote.textContent = "Stil / geïsoleerd: geen beweging en geen invloed op andere objecten. Klokstand loopt wel door. Opnieuw Actief hervat de bewaarde snelheid.";
+    gateNote.style.cssText = "display:block;width:100%;font-size:11px;color:#a9c0d5;line-height:1.45";
+    gateRow.append(gateNote);
+
     const actions = document.createElement("div");
     actions.style.cssText = "display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px";
     const mkButton = (label, callback) => {
@@ -742,7 +792,7 @@
       }
       coords.append(cell);
     }
-    editor.append(row, actions, editorStatus, coords);
+    editor.append(row, gateRow, actions, editorStatus, coords);
     // Na het canvas en vóór de bestaande meetpanelen.
     canvas.insertAdjacentElement("afterend", editor);
 
@@ -800,7 +850,7 @@
 
   function extendUI() {
     const title = document.querySelector(".td-header h1");
-    if (title) title.textContent = "Tijdsdilatatie — drie klokken · v1.4";
+    if (title) title.textContent = "Tijdsdilatatie — drie klokken · v1.5";
     const legend = document.createElement("span");
     const dot = document.createElement("i");
     dot.className = "td-dot";

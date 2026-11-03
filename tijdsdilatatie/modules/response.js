@@ -36,6 +36,9 @@
       for (let i = 0; i < names.length; i++) {
         for (let j = i + 1; j < names.length; j++) {
           const first = names[i], second = names[j];
+          // Een stilgezet object doet in geen enkele richting mee aan
+          // de paarrespons: het trekt niet én reageert niet.
+          if (S.get("active" + first) !== 1 || S.get("active" + second) !== 1) continue;
           const rateFirst = world["rate" + first];
           const rateSecond = world["rate" + second];
           if (rateFirst === rateSecond) continue;
@@ -58,8 +61,13 @@
         }
       }
       for (const name of names) {
-        // Netto momentane versnelling uit ALLE drie objectparen.
-        // Voor de bestaande bewegingsdynamiek blijft dv exact hetzelfde.
+        if (S.get("active" + name) !== 1) {
+          world[name].ax = 0;
+          world[name].ay = 0;
+          continue;
+        }
+        // Netto momentane versnelling uit uitsluitend actieve paren.
+        // De formule voor elk actief paar blijft exact hetzelfde.
         world[name].ax = dv[name].x / dtMyr;
         world[name].ay = dv[name].y / dtMyr;
         world[name].vx += dv[name].x;

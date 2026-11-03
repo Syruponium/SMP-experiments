@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v0.7
+# Tijdsdilatatie — modulaire simulatie v0.8
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -102,3 +102,14 @@ Zonder wijzigingen aan de bestaande JSFiddle-HTML/CSS verschijnen boven de ander
 - De versnelling wordt DIRECT uit de werkelijke in die simulatiestap opgetelde snelheidsverandering afgeleid, niet geschat uit de snelheid of positie op het canvas. De bijdrage van elk paar telt vectorieel mee.
 - Alle bestaande baan-, klok- en koppelingsregels zijn behouden. Alleen de acceleratie-diagnostiek en de presentatie zijn toegevoegd.
 - **Gebruik**: open je bestaande JSFiddle en klik alleen op Run.
+
+## Twee afstandsschalen, ongewijzigde fysica (v0.8)
+
+- Beginafstand A–B (zon–aarde): 1 tot 1 miljard eenheden, logaritmische slider. Standaard 10.000.
+- Beginafstand B–C (aarde–maan): 0,001 tot 1 miljard eenheden, logaritmische slider. Standaard circa 25,1.
+- Beginhoek C rond B: 0–360 graden. Hiermee staat C relatief aan B, niet langer met absolute X/Y-sliders.
+- Camera volgt: alle drie, A, B of C. De zichtbreedte van een gekozen focus is instelbaar. In totaaloverzicht blijft automatisch schalen actief.
+- A–B en B–C zijn uitsluitend **beginposities**. De eerdere kloktempo-, duur-, start­snelheid-, bewegings- en responsregels zijn exact ongewijzigd. De testkoppeling blijft onafhankelijk van afstand.
+- Met camera op B kan een heel kleine B–C-beweging zichtbaar blijven wanneer A zeer ver weg is.
+- Geen stabiele zon–aarde–maanbanen worden afgedwongen of voorgeprogrammeerd. Of een geneste baan ontstaat is juist de onderzoeksvraag.
+- In de bestaande JSFiddle volstaat opnieuw **Run**; HTML, CSS en loader blijven gelijk.

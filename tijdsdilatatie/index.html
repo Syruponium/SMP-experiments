@@ -1,0 +1,35 @@
+<main class="td-app">
+  <header class="td-header">
+    <div>
+      <p class="td-eyebrow">SMP / EXPERIMENT 01</p>
+      <h1>Tijdsdilatatie — twee klokken</h1>
+      <p>Onderzoek of het actuele kloktempo of de opgebouwde duur een bewegingsrespons kan geven.</p>
+    </div>
+    <div class="td-actions">
+      <button id="td-pause" type="button">Pauze</button>
+      <button id="td-reset" type="button" class="td-secondary">Reset</button>
+    </div>
+  </header>
+
+  <section class="td-layout">
+    <section class="td-main" aria-label="Simulatie">
+      <div class="td-stage-top">
+        <span><i class="td-dot td-a"></i> A <small>oranje</small></span>
+        <span><i class="td-dot td-b"></i> B <small>blauw</small></span>
+        <span id="td-mode-label" class="td-pill">Vrije beweging</span>
+      </div>
+      <canvas id="td-canvas" width="960" height="520" aria-label="Twee objecten met instelbare kloktempo's"></canvas>
+      <div class="td-note">Geen Newton-kracht · geen oscillatoren · tempo is voorlopig een massaproxy</div>
+      <div class="td-metrics" aria-live="off">
+        <div><span>Simulatietijd</span><strong id="td-years">0 jaar</strong></div>
+        <div><span>Klok A</span><strong id="td-tau-a">0 jaar</strong></div>
+        <div><span>Klok B</span><strong id="td-tau-b">0 jaar</strong></div>
+        <div><span>Opgebouwd verschil B − A</span><strong id="td-gap">0 jaar</strong></div>
+        <div><span>Afstand A–B</span><strong id="td-distance">40 eenheden</strong></div>
+        <div><span>Snelheden A / B</span><strong id="td-speed">0 / 0</strong></div>
+      </div>
+      <p class="td-disclaimer">Onderzoeksmodel, geen gekalibreerde zwaartekrachtsimulatie. De optionele respons is een expliciete hypothese, geen spontaan ontdekt effect.</p>
+    </section>
+    <aside id="td-controls" class="td-controls" aria-label="Modulaire instellingen"></aside>
+  </section>
+</main>

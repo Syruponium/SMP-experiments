@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "files": [
+    "core/registry.js",
+    "modules/clocktempo.js",
+    "modules/duration.js",
+    "modules/motion.js",
+    "modules/response.js",
+    "core/app.js"
+  ]
+}

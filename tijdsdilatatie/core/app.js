@@ -257,6 +257,8 @@
     addMetric("td-gap-cb", "Opgebouwd verschil C − B");
     addMetric("td-distance-ac", "Afstand A–C");
     addMetric("td-distance-bc", "Afstand B–C");
+    addMetric("td-start-rates", "Berekend begintempo A / B / C");
+    addMetric("td-current-rates", "Huidig kloktempo A / B / C");
     const caption = document.getElementById("td-speed").previousElementSibling;
     if (caption) caption.textContent = "Snelheden A / B / C";
   }
@@ -271,6 +273,13 @@
       document.getElementById("td-tau-" + name.toLowerCase()).textContent =
         nf.format(world["tau" + name]) + " jaar";
     }
+    const durationModule = S.modules.find(module => module.id === "duration");
+    document.getElementById("td-start-rates").textContent = names.map(name =>
+      durationModule.rateAt(name, 0).toFixed(3).replace(".", ",")
+    ).join(" / ") + " ×";
+    document.getElementById("td-current-rates").textContent = names.map(name =>
+      world["rate" + name].toFixed(3).replace(".", ",")
+    ).join(" / ") + " ×";
     document.getElementById("td-gap").textContent = nf.format(world.tauB - world.tauA) + " jaar";
     document.getElementById("td-gap-ca").textContent = nf.format(world.tauC - world.tauA) + " jaar";
     document.getElementById("td-gap-cb").textContent = nf.format(world.tauC - world.tauB) + " jaar";

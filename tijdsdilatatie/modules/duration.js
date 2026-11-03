@@ -3,22 +3,27 @@
   window.TD_SIM.registerModule({
     id: "duration",
     title: "2 · Cumulatieve duur",
-    description: "De klokstanden tellen op; in de groeimodus veranderen de kloktempo's lineair van beginwaarde naar eindwaarde. De respons gebruikt de groeisnelheid van het klokverschil.",
+    description: "De begintempo's worden automatisch afgeleid uit het eindtempo en één gemeenschappelijk beginaandeel. De klokstanden tellen de veranderende tempo's op.",
     order: 20,
     controls: [
       { id: "timeExponent", label: "Tijdsversnelling (10^n jaar/s)", min: 0, max: 6, step: 1, default: 6, digits: 0, unit: "", help: "Bij 6 verstrijken 1 miljoen simulatiejaren per echte seconde.", format: "exponent" },
       { id: "growthMyr", label: "Duur van tempogroei", min: 1, max: 4500, step: 1, default: 10, digits: 0, unit: "miljoen jaar", reset: true, help: "Bij 10 miljoen jaar duurt de overgang 10 seconden op tijdsversnelling 10^6. Alleen in de cumulatieve groeimodus." },
-      { id: "startRateA", label: "Begintempo A", min: 0.5, max: 1.5, step: 0.001, default: 0.990, digits: 3, unit: "×", reset: true, help: "Bij massagroei (hypothese) kan het tempo richting het ingestelde eindtempo vertragen." },
-      { id: "startRateB", label: "Begintempo B", min: 0.5, max: 1.5, step: 0.001, default: 1.005, digits: 3, unit: "×", reset: true },
-      { id: "startRateC", label: "Begintempo C", min: 0.5, max: 1.5, step: 0.001, default: 1.023, digits: 3, unit: "×", reset: true }
+      { id: "initialFractionPct", label: "Beginaandeel van eind-tijdsdilatatie", min: 0, max: 100, step: 1, default: 50, digits: 0, unit: "%", reset: true, help: "50% = starten halverwege referentietempo 1,000 en het gekozen eindtempo; geldt voor A, B en C." }
     ],
     // Lineaire overgang van begin- naar eindtempo. De geschiedenis is geen
     // extra krachtveld: uitsluitend de actuele klokstanden worden bijgehouden.
+    initialRate(name) {
+      const S = window.TD_SIM;
+      const target = S.get("rate" + name);
+      const fraction = S.get("initialFractionPct") / 100;
+      // Starttempo = referentie plus beginaandeel van het eindverschil.
+      return 1 + (target - 1) * fraction;
+    },
     rateAt(name, years) {
       const S = window.TD_SIM;
       const target = S.get("rate" + name);
       if (S.get("responseMode") !== "duration") return target;
-      const start = S.get("startRate" + name);
+      const start = this.initialRate(name);
       const yearsOfGrowth = S.get("growthMyr") * 1e6;
       const fraction = Math.max(0, Math.min(1, years / yearsOfGrowth));
       return start + (target - start) * fraction;

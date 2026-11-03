@@ -1,4 +1,4 @@
-# Tijdsdilatatie — modulaire simulatie v0.5
+# Tijdsdilatatie — modulaire simulatie v0.6
 
 Een minimale **drie-objecten-proef**, gebaseerd op de laadarchitectuur van modular-v3, zonder zware oscillatorvelden of deeltjessimulatie.
 
@@ -17,7 +17,7 @@ Daarna is bij iedere wijziging in GitHub alleen **Run** nodig: de loader laadt [
 | Module | Bestand | Wat wordt ingesteld? |
 | --- | --- | --- |
 | 1. Kloktempo / massaproxy | [modules/clocktempo.js](modules/clocktempo.js) | Drie onafhankelijke, relatieve kloktempo's (A/B/C) |
-| 2. Cumulatieve duur | [modules/duration.js](modules/duration.js) | Tijdsversnelling, begintempo's A/B/C, groeiduur, integratie van klokstanden |
+| 2. Cumulatieve duur | [modules/duration.js](modules/duration.js) | Tijdsversnelling, afgeleide begintempo's A/B/C, groeiduur en klokstanden |
 | 3. Snelheid en posities | [modules/motion.js](modules/motion.js) | Beginafstand, snelheid en richting (0–360°) voor A, B en C |
 | 4. Experimentele respons | [modules/response.js](modules/response.js) | Uit / vaste kloktempo's / groeisnelheid van cumulatief klokverschil, koppelingssterkte |
 
@@ -73,3 +73,20 @@ De bestaande schuifjes **Kloktempo A/B/C** zijn de **eindtempo's**. Module 2 hee
 - De huidige richtingsregel (snellere klok naar tragere) blijft expliciet voorgeschreven. Energie/impulsbehoud worden nog niet gegarandeerd.
 - **Duur van tempogroei** staat standaard op 10 miljoen jaar: bij 1 miljoen gesimuleerde jaren/s is dat ongeveer 10 echte seconden. Instelbaar tot 4.500 miljoen jaar.
 - Wijzigen van groeitijd, begintempo's of responsmodus start de simulatie opnieuw. HTML/CSS/loader in een bestaande JSFiddle hoeven niet gewijzigd te worden; alleen **Run**.
+
+## Proportionele begintempo's (v0.6)
+
+De drie vaste sliders voor begintempo A/B/C zijn verwijderd. Elke startwaarde wordt nu uit de bijbehorende ingestelde eindwaarde berekend, niet onafhankelijk ingesteld.
+
+- Referentietempo: **1,000**.
+- Nieuwe instelling in module 2: **Beginaandeel van eind-tijdsdilatatie** (0–100%, standaard 50%).
+- Formule: begin = 1 + (eind − 1) × (percentage / 100).
+- Voorbeeld bij 50%: A 0,980 → 0,990 bij start; B 1,000 → 1,000; C 1,020 → 1,010.
+- Een ander gekozen eindtempo verandert direct de berekende startwaarde: bij A = 0,600 begint A op 0,800; bij C = 1,400 begint C op 1,200.
+- Tijdens de ingestelde groeiduur beweegt ieder tempo lineair naar zijn eindwaarde.
+- De overgang geldt alleen in de groeimodus (module 4); de vaste-tempo-modus gebruikt vanaf het begin de eindwaarden.
+- Aanpassen van de eindtempo's of het beginaandeel reset bij het loslaten van de schuif de simulatie.
+- Twee nieuwe metriekvelden tonen de berekende begintempo's en actuele kloktempo's van A/B/C.
+- Bij de bestaande JSFiddle volstaat **Run**; HTML en CSS blijven ongewijzigd.
+
+Dit vervangt de beschrijving van de afzonderlijke begintempo-sliders uit v0.5 hierboven.
